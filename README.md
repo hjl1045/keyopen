@@ -11,12 +11,21 @@ and recommends free, ergonomic key combinations you could still grab.
 - Accessibility permission (to read other apps' menu shortcuts)
 
 ## Build & run
+
+### As a standalone app (recommended)
+```sh
+./scripts/package.sh
+open KeyOpen.app          # or double-click in Finder; move to /Applications to keep it
+```
+This builds `KeyOpen.app`, which runs **on its own** — no terminal window to keep
+open. A keyboard icon appears in the menu bar (no Dock icon). The app is ad-hoc
+code-signed so its Accessibility permission sticks across rebuilds.
+
+### From the terminal (dev loop)
 ```sh
 swift build -c release
-.build/release/KeyOpen
+.build/release/KeyOpen    # runs in the foreground — closing the terminal quits it
 ```
-A keyboard icon appears in the menu bar (no Dock icon). Click it to scan the
-frontmost app.
 
 ## Usage
 Two ways to open KeyOpen, both of which read the app you were just using:
@@ -27,9 +36,10 @@ Two ways to open KeyOpen, both of which read the app you were just using:
 
 ## Permissions
 On first run, grant Accessibility: **System Settings → Privacy & Security →
-Accessibility**, and enable the `KeyOpen` binary. Without it, only system
-shortcuts are shown. Running the built binary directly (`.build/release/KeyOpen`)
-gives it a stable identity so the grant persists across launches.
+Accessibility** (this is the *privacy* pane that lists apps allowed to control
+your Mac — **not** the separate Accessibility features pane), and enable
+**KeyOpen**. Without it, only system shortcuts are shown. The packaged
+`KeyOpen.app` is ad-hoc signed, so the grant persists across rebuilds.
 
 ## Scope & honesty
 KeyOpen reports combos that are free *among what it can see*: system shortcuts
