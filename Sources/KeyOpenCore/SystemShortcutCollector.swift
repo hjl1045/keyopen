@@ -4,12 +4,26 @@ public enum SymbolicHotkeyParser {
     /// A small curated map of well-known hotkey ids. Unknown ids fall back
     /// to a generic name — the parsing logic is what matters, not exhaustiveness.
     static let names: [Int: String] = [
+        7:  "Move focus to the menu bar",
+        8:  "Move focus to the Dock",
+        9:  "Move focus to the active or next window",
+        10: "Move focus to the window toolbar",
+        11: "Move focus to the floating window",
+        13: "Move focus to the status menus",
+        27: "Move focus to next window in application",
         32: "Mission Control",
         34: "Mission Control – Application windows",
+        36: "Show Launchpad",
+        52: "Turn VoiceOver on or off",
+        57: "Turn Dock hiding on or off",
+        60: "Select the previous input source",
+        61: "Select the next source in the Input menu",
         64: "Spotlight – Show search field",
         65: "Spotlight – Show Finder search window",
         79: "Move left a space",
         81: "Move right a space",
+        163: "Show Notification Center",
+        222: "Show Today / Notification Center",
     ]
 
     public static func parse(_ dict: [String: Any]) -> [Binding] {
