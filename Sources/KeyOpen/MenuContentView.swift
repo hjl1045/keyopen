@@ -28,11 +28,11 @@ struct MenuContentView: View {
 
             Divider()
             Text("Free among what we can see — system shortcuts + this app's menus. Third-party global hotkeys (e.g. Raycast, Rectangle) are hidden by macOS.")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(14)
-        .frame(width: 320)
+        .padding(16)
+        .frame(width: 340)
         .onAppear { viewModel.scan(target: tracker.lastActiveApp) }
     }
 
@@ -64,8 +64,8 @@ struct MenuContentView: View {
 
     private func inUseSection(_ result: ScanResult) -> some View {
         let conflictCombos = Set(result.conflicts.map(\.combo))
-        return VStack(alignment: .leading, spacing: 4) {
-            Text("In use").font(.subheadline).bold()
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("In use").font(.headline)
             bindingRows("System", result.systemBindings, conflicts: conflictCombos)
             if !result.appBindings.isEmpty {
                 bindingRows(viewModel.appName ?? "App", result.appBindings, conflicts: conflictCombos)
@@ -77,29 +77,42 @@ struct MenuContentView: View {
                              _ bindings: [KeyOpenCore.Binding],
                              conflicts: Set<KeyCombo>) -> some View {
         let rows = bindings.enumerated().map { Row(id: $0.offset, binding: $0.element) }
-        return VStack(alignment: .leading, spacing: 2) {
-            Text(title).font(.caption).foregroundStyle(.secondary)
+        return VStack(alignment: .leading, spacing: 3) {
+            Text(title.uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
             ForEach(rows) { row in
-                HStack {
+                HStack(spacing: 8) {
                     Text(row.binding.combo.displayString)
-                        .monospaced()
-                        .frame(width: 80, alignment: .leading)
-                    Text(row.binding.action).lineLimit(1)
+                        .font(.system(size: 13, weight: .medium))
+                        .frame(width: 96, alignment: .leading)
+                    Text(row.binding.action)
+                        .font(.system(size: 13))
+                        .lineLimit(1)
                     if conflicts.contains(row.binding.combo) {
-                        Spacer()
-                        Text("⚠︎").help("Conflicts with another shortcut")
+                        Spacer(minLength: 0)
+                        Text("⚠︎")
+                            .foregroundStyle(.orange)
+                            .help("Conflicts with another shortcut")
                     }
                 }
-                .font(.caption)
             }
         }
     }
 
     private func openSlotsSection(_ result: ScanResult) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Open slots").font(.subheadline).bold()
-            ForEach(result.recommendations, id: \.self) { combo in
-                Text(combo.displayString).monospaced().font(.caption)
+        let columns = [GridItem(.adaptive(minimum: 72), spacing: 6)]
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("Open slots").font(.headline)
+            LazyVGrid(columns: columns, alignment: .leading, spacing: 6) {
+                ForEach(result.recommendations, id: \.self) { combo in
+                    Text(combo.displayString)
+                        .font(.system(size: 13, weight: .medium))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.accentColor.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
             }
         }
     }
