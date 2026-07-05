@@ -29,10 +29,21 @@ final class PanelController {
         let panel = self.panel ?? makePanel()
         panel.contentView = hosting
         panel.setContentSize(NSSize(width: 340, height: 520))
-        panel.center()
+        positionOnActiveScreen(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         self.panel = panel
+    }
+
+    /// Center on whichever screen the pointer is on, so multi-display users see it.
+    private func positionOnActiveScreen(_ panel: NSPanel) {
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) }
+            ?? NSScreen.main
+        guard let visible = screen?.visibleFrame else { panel.center(); return }
+        let size = panel.frame.size
+        panel.setFrameOrigin(NSPoint(x: visible.midX - size.width / 2,
+                                     y: visible.midY - size.height / 2))
     }
 
     private func makePanel() -> NSPanel {
@@ -48,6 +59,10 @@ final class PanelController {
         panel.level = .floating
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
+        // Appear on the current Space, including over fullscreen apps — otherwise
+        // the panel can be created "visible" but stranded on another Space.
+        // (.canJoinAllSpaces and .moveToActiveSpace are mutually exclusive.)
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         return panel
     }
 }
