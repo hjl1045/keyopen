@@ -25,7 +25,7 @@ final class ScanEngineTests: XCTestCase {
         XCTAssertEqual(result.conflicts.count, 1)
         XCTAssertEqual(result.conflicts.first?.combo, cmdSpace)
         XCTAssertFalse(result.recommendations.isEmpty)
-        XCTAssertFalse(result.recommendations.contains(cmdSpace))
+        XCTAssertFalse(result.recommendations.contains { $0.combo == cmdSpace })
     }
 
     func testNilAppCollectorYieldsSystemOnly() {

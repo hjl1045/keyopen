@@ -61,6 +61,20 @@ public enum Scoring {
     }
 }
 
+/// A recommended combo, plus any simpler shortcuts already bound on the same key.
+public struct Recommendation: Sendable, Hashable {
+    public let combo: KeyCombo
+    /// Combos already in use on the same key with a strict-subset of this combo's
+    /// modifiers (e.g. `⌘D` for a `⇧⌘D` suggestion). Non-empty = "usable, but it
+    /// stacks a modifier onto a key that already means something."
+    public let overlaps: [KeyCombo]
+
+    public init(combo: KeyCombo, overlaps: [KeyCombo]) {
+        self.combo = combo
+        self.overlaps = overlaps
+    }
+}
+
 public struct Recommender {
     private let candidates: [KeyCombo]
     private let reserved: Set<KeyCombo>
@@ -71,14 +85,29 @@ public struct Recommender {
         self.reserved = reserved
     }
 
-    public func recommend(from map: ShortcutMap, limit: Int = 8) -> [KeyCombo] {
-        let taken = map.takenCombos().union(reserved)
-        let free = candidates.enumerated().filter { !taken.contains($0.element) }
-        let ranked = free.sorted { a, b in
-            let sa = Scoring.score(a.element), sb = Scoring.score(b.element)
-            if sa != sb { return sa > sb }
+    public func recommend(from map: ShortcutMap, limit: Int = 8) -> [Recommendation] {
+        let inUse = map.takenCombos()             // real bindings (system + app)
+        let blocked = inUse.union(reserved)       // never suggest these exact combos
+
+        let free = candidates.enumerated().filter { !blocked.contains($0.element) }
+        let scored = free.map { pair -> (offset: Int, rec: Recommendation, score: Double) in
+            let overlaps = simplerFormsInUse(of: pair.element, among: inUse)
+            // Down-rank (not exclude) combos whose simpler form on the same key is used.
+            let penalty: Double = overlaps.isEmpty ? 0 : 1000
+            let score = Scoring.score(pair.element) - penalty
+            return (pair.offset, Recommendation(combo: pair.element, overlaps: overlaps), score)
+        }
+
+        let ranked = scored.sorted { a, b in
+            if a.score != b.score { return a.score > b.score }
             return a.offset < b.offset // stable: preserve ergonomic candidate order on ties
         }
-        return ranked.prefix(limit).map(\.element)
+        return ranked.prefix(limit).map(\.rec)
+    }
+
+    private func simplerFormsInUse(of combo: KeyCombo, among inUse: Set<KeyCombo>) -> [KeyCombo] {
+        inUse
+            .filter { $0.key == combo.key && $0.modifiers.isStrictSubset(of: combo.modifiers) }
+            .sorted { $0.displayString < $1.displayString }
     }
 }

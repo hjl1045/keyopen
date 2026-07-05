@@ -101,17 +101,20 @@ struct MenuContentView: View {
     }
 
     private func openSlotsSection(_ result: ScanResult) -> some View {
-        let columns = [GridItem(.adaptive(minimum: 72), spacing: 6)]
-        return VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             Text("Open slots").font(.headline)
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 6) {
-                ForEach(result.recommendations, id: \.self) { combo in
-                    Text(combo.displayString)
+            ForEach(result.recommendations, id: \.combo) { rec in
+                HStack(spacing: 8) {
+                    Text(rec.combo.displayString)
                         .font(.system(size: 13, weight: .medium))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.accentColor.opacity(0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .frame(width: 96, alignment: .leading)
+                    if !rec.overlaps.isEmpty {
+                        Text("⚠︎ \(rec.overlaps.map(\.displayString).joined(separator: ", ")) in use")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .help("Usable, but this key already has a simpler shortcut — may be confusing.")
+                    }
+                    Spacer(minLength: 0)
                 }
             }
         }

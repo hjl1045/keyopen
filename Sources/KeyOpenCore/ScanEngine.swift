@@ -2,7 +2,7 @@ public struct ScanResult: Sendable {
     public let systemBindings: [Binding]
     public let appBindings: [Binding]
     public let conflicts: [(combo: KeyCombo, bindings: [Binding])]
-    public let recommendations: [KeyCombo]
+    public let recommendations: [Recommendation]
 }
 
 public enum ScanEngine {

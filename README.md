@@ -29,6 +29,11 @@ KeyOpen reports combos that are free *among what it can see*: system shortcuts
 and the current app's menus. macOS does not expose third-party global hotkeys
 (e.g. Raycast, Rectangle) to other apps, so those are not accounted for.
 
+A combo whose simpler form on the same key is already used (e.g. `⇧⌘D` when
+`⌘D` is bound) is still offered, but ranked below fully-clean keys and flagged
+`⚠︎ … in use` — usable, but it stacks a modifier onto a key that already means
+something.
+
 ## Tests
 ```sh
 swift test
