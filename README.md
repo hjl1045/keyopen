@@ -18,6 +18,13 @@ swift build -c release
 A keyboard icon appears in the menu bar (no Dock icon). Click it to scan the
 frontmost app.
 
+## Usage
+Two ways to open KeyOpen, both of which read the app you were just using:
+- **Click** the menu-bar icon.
+- **Press `⌃⌥⌘K`** from anywhere — a floating panel appears. Press it again (or
+  close the panel) to dismiss. Handy when you're mid-setup in another app and
+  want a free combo. (The hotkey also needs the Accessibility permission.)
+
 ## Permissions
 On first run, grant Accessibility: **System Settings → Privacy & Security →
 Accessibility**, and enable the `KeyOpen` binary. Without it, only system
