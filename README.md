@@ -41,12 +41,14 @@ Accessibility** (the *privacy* pane that lists apps allowed to control your Mac 
 Without it, only system + other-app global-hotkey shortcuts show (reading the
 current app's menus needs it).
 
-**Keep the grant across rebuilds — run `./scripts/setup-signing.sh` once.** By
-default the app is *ad-hoc* signed, so its code identity changes on every rebuild
-and macOS **resets the Accessibility grant** each time you repackage (Settings may
-still show it enabled while the app reports "not granted" — that's a stale entry).
-`setup-signing.sh` creates a stable local signing identity so the grant sticks.
-If you land in the stale state, clear it and re-grant:
+**Keeping the grant across rebuilds.** `package.sh` signs with a *stable*
+code-signing identity when you have one — an Xcode **Apple Development**
+certificate is picked up automatically (or set `CODESIGN_IDENTITY="…"` to choose).
+With a stable identity the Accessibility grant persists across rebuilds. If you
+have **no** signing cert, the app falls back to *ad-hoc*, whose code hash changes
+every build, so macOS **resets the grant each rebuild** (Settings shows it enabled
+while the app reports "not granted" — a stale entry); `./scripts/setup-signing.sh`
+can create a local identity for that case. To clear a stale entry:
 ```sh
 tccutil reset Accessibility com.hjl1045.KeyOpen
 ```

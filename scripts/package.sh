@@ -52,16 +52,21 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-# Sign with the stable self-signed identity if it exists (keeps Accessibility
-# across rebuilds); otherwise fall back to ad-hoc (which resets it each rebuild).
-IDENTITY="KeyOpen Self-Signed"
-if security find-identity -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
-    codesign --force --deep --sign "$IDENTITY" "$APP" >/dev/null 2>&1
-    echo "Signed with stable identity '$IDENTITY' — Accessibility grant will persist."
+# Sign with a STABLE identity if one is available, so the Accessibility grant
+# persists across rebuilds. Preference: $CODESIGN_IDENTITY, else the first valid
+# code-signing identity (an Xcode "Apple Development" cert works), else ad-hoc.
+SIGN_ID="${CODESIGN_IDENTITY:-}"
+if [ -z "$SIGN_ID" ]; then
+    SIGN_ID="$(security find-identity -p codesigning -v 2>/dev/null \
+        | awk 'match($0, /[0-9A-F]{40}/) { print substr($0, RSTART, 40); exit }')"
+fi
+if [ -n "$SIGN_ID" ] && codesign --force --deep --sign "$SIGN_ID" "$APP" >/dev/null 2>&1; then
+    echo "Signed with identity $SIGN_ID (stable — Accessibility grant will persist)."
 else
     codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
-    echo "Ad-hoc signed. NOTE: run ./scripts/setup-signing.sh once so the"
-    echo "Accessibility permission stops resetting on every rebuild."
+    echo "Ad-hoc signed (no code-signing identity found). The Accessibility grant"
+    echo "will reset on each rebuild — run ./scripts/setup-signing.sh to get a"
+    echo "stable identity."
 fi
 
 echo "Built ./$APP"

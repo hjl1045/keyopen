@@ -131,9 +131,12 @@ Cause: ad-hoc signing gives the app an identity that is just its code hash, whic
 changes on every rebuild. macOS ties the grant to that hash, so a rebuilt app no
 longer matches the authorized one — the Settings entry goes stale.
 
-Fix (once): `./scripts/setup-signing.sh` creates a **stable** self-signed
-identity; `package.sh` then signs with it, so the grant persists across rebuilds.
-To clear an already-stale entry:
+Fix: sign with a **stable** identity. `package.sh` does this automatically if you
+have any code-signing certificate — an Xcode **Apple Development** cert works
+(override with `CODESIGN_IDENTITY="…"`). With no cert at all,
+`./scripts/setup-signing.sh` creates a local self-signed one (you may have to
+trust it for code signing in Keychain Access). Either way, once the identity is
+stable the grant persists across rebuilds. To clear an already-stale entry:
 
 ```sh
 tccutil reset Accessibility com.hjl1045.KeyOpen
