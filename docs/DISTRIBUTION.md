@@ -1,0 +1,132 @@
+# Distributing KeyOpen
+
+KeyOpen already *is* a real macOS app — `scripts/package.sh` produces
+`KeyOpen.app`, a normal double-clickable, menu-bar app bundle with an icon.
+This doc covers getting it onto other machines, from "just my other Mac" up to
+"publish it on Homebrew."
+
+The tiers differ only in **how much code-signing you do**, which decides how much
+Gatekeeper friction the recipient hits.
+
+---
+
+## Tier 1 — This machine (done)
+
+```sh
+./scripts/package.sh
+open KeyOpen.app          # or double-click; mv to /Applications to keep it
+```
+
+The app is **ad-hoc signed**, which is enough to run on the machine that built
+it, and keeps the Accessibility grant stable across rebuilds.
+
+## Tier 2 — Another Mac you own (has Xcode / Swift)
+
+Same as Tier 1, on that machine:
+
+```sh
+git clone <this repo>
+cd macos-shortcut-helper
+./scripts/package.sh && open KeyOpen.app
+```
+
+Needs the Swift toolchain (Xcode or the Command Line Tools). Re-grant
+Accessibility on that Mac the first time.
+
+## Tier 3 — A Mac without the toolchain (hand off the built app)
+
+Build once, ship the bundle:
+
+```sh
+./scripts/release.sh          # builds KeyOpen.app and zips it to dist/KeyOpen-<ver>.zip
+```
+
+Transfer `dist/KeyOpen-<ver>.zip`, unzip, and drag `KeyOpen.app` to
+`/Applications`. Because it's **ad-hoc signed (not notarized)**, macOS Gatekeeper
+will flag it as coming from an "unidentified developer" on a machine that didn't
+build it. The recipient clears it one of two ways:
+
+- **Right-click → Open** the first time (then "Open" in the dialog), or
+- `xattr -dr com.apple.quarantine /Applications/KeyOpen.app`
+
+This is fine for yourself or a few trusting users. It does **not** scale to
+public distribution — for that, notarize (Tier 4).
+
+## Tier 4 — Public distribution / Homebrew
+
+Yes, you can ship this on Homebrew. GUI `.app`s go through a **Homebrew Cask**.
+The one real cost is **notarization** so users don't fight Gatekeeper.
+
+### 4a. Sign + notarize (one-time setup, ~$99/yr Apple Developer Program)
+
+```sh
+# Sign with your Developer ID (not ad-hoc):
+codesign --force --deep --options runtime \
+  --sign "Developer ID Application: Your Name (TEAMID)" KeyOpen.app
+
+# Zip and notarize:
+ditto -c -k --keepParent KeyOpen.app KeyOpen.zip
+xcrun notarytool submit KeyOpen.zip --apple-id you@example.com \
+  --team-id TEAMID --password <app-specific-password> --wait
+
+# Staple the ticket so it works offline:
+xcrun stapler staple KeyOpen.app
+```
+
+Without notarization you *can* still publish a cask, but users must pass
+`--no-quarantine` or right-click-Open — not a good public experience, and the
+official `homebrew-cask` repo won't accept it.
+
+### 4b. Host a release
+
+Make the repo (or at least its **Releases**) public, then attach the notarized
+`KeyOpen-<version>.zip` to a GitHub Release tagged `v<version>`. Grab its SHA:
+
+```sh
+shasum -a 256 dist/KeyOpen-<version>.zip
+```
+
+### 4c. Publish a cask (your own tap is easiest)
+
+Create a GitHub repo named **`homebrew-tap`** under your account and add
+`Casks/keyopen.rb`:
+
+```ruby
+cask "keyopen" do
+  version "0.1.0"
+  sha256 "PUT_THE_SHASUM_HERE"
+
+  url "https://github.com/hjl1045/macos-shortcut-helper/releases/download/v#{version}/KeyOpen-#{version}.zip"
+  name "KeyOpen"
+  desc "Menu-bar helper that shows in-use keyboard shortcuts and recommends free ones"
+  homepage "https://github.com/hjl1045/macos-shortcut-helper"
+
+  app "KeyOpen.app"
+
+  caveats <<~EOS
+    KeyOpen needs Accessibility permission to read other apps' menu shortcuts:
+    System Settings → Privacy & Security → Accessibility → enable KeyOpen.
+  EOS
+end
+```
+
+Then anyone installs it with:
+
+```sh
+brew install --cask hjl1045/tap/keyopen
+```
+
+Later, submitting to the **official** `homebrew-cask` repo is possible once the
+project has some traction (they have notability guidelines) — but a personal tap
+works immediately and identically for users who know the tap name.
+
+---
+
+## Summary
+
+| Goal | What you do | Gatekeeper |
+|------|-------------|-----------|
+| Run here | `package.sh` (ad-hoc) | none |
+| Your other Macs | build there, or ship zip + unquarantine | right-click-Open |
+| A few users | `release.sh`, send zip | right-click-Open |
+| Public / Homebrew | Developer ID sign + notarize + cask | none |
