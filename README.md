@@ -42,9 +42,12 @@ your Mac — **not** the separate Accessibility features pane), and enable
 `KeyOpen.app` is ad-hoc signed, so the grant persists across rebuilds.
 
 ## Scope & honesty
-KeyOpen reports combos that are free *among what it can see*: system shortcuts
-and the current app's menus. macOS does not expose third-party global hotkeys
-(e.g. Raycast, Rectangle) to other apps, so those are not accounted for.
+KeyOpen reports combos that are free *among what it can see*: system shortcuts,
+the current app's menus, and the global hotkeys of other **running** apps that it
+can recover from their preferences (apps using the popular `KeyboardShortcuts`
+library store them readably). macOS does not let one app *enumerate* another's
+global hotkeys, so apps that use other mechanisms (raw `RegisterEventHotKey`,
+`MASShortcut`, Electron, sandboxed prefs) can still be missed.
 
 A combo whose simpler form on the same key is already used (e.g. `⇧⌘D` when
 `⌘D` is bound) is still offered, but ranked below fully-clean keys and flagged

@@ -27,7 +27,7 @@ struct MenuContentView: View {
             }
 
             Divider()
-            Text("Free among what we can see — system shortcuts + this app's menus. Third-party global hotkeys (e.g. Raycast, Rectangle) are hidden by macOS.")
+            Text("Free among what we can see — system shortcuts, this app's menus, and global hotkeys read from other apps' settings. Apps that hide their hotkeys from macOS may still be missed.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -69,6 +69,9 @@ struct MenuContentView: View {
             bindingRows("System", result.systemBindings, conflicts: conflictCombos)
             if !result.appBindings.isEmpty {
                 bindingRows(viewModel.appName ?? "App", result.appBindings, conflicts: conflictCombos)
+            }
+            if !result.globalBindings.isEmpty {
+                bindingRows("Global hotkeys (other apps)", result.globalBindings, conflicts: conflictCombos)
             }
         }
     }

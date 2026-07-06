@@ -36,4 +36,15 @@ final class ScanEngineTests: XCTestCase {
         XCTAssertEqual(result.appBindings.count, 0)
         XCTAssertEqual(result.systemBindings.count, 1)
     }
+
+    func testGlobalHotkeysAreTakenAndExcludedFromRecommendations() {
+        let shiftCmdK = KeyCombo(modifiers: [.shift, .command], key: "K")
+        let system = FakeCollector(bindings: [])
+        let globals = FakeCollector(bindings: [
+            Binding(combo: shiftCmdK, action: "LocalFlow · Toggle Dictation", source: .globalHotkey)
+        ])
+        let result = ScanEngine.run(system: system, app: nil, globals: globals)
+        XCTAssertEqual(result.globalBindings.count, 1)
+        XCTAssertFalse(result.recommendations.contains { $0.combo == shiftCmdK })
+    }
 }

@@ -41,6 +41,9 @@ public struct KeyCombo: Hashable, Sendable {
 public enum Source: Hashable, Sendable {
     case system
     case appMenu
+    /// A global hotkey another running app registered, recovered from its
+    /// preferences (e.g. apps using the `KeyboardShortcuts` library).
+    case globalHotkey
 }
 
 public struct Binding: Hashable, Sendable {
