@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import KeyOpenCore
 
 struct MenuContentView: View {
@@ -34,6 +35,13 @@ struct MenuContentView: View {
         .padding(16)
         .frame(width: 340)
         .onAppear { viewModel.scan(target: tracker.lastActiveApp) }
+        // While access is missing, re-check so the banner clears itself the
+        // moment you grant it — no manual refresh or relaunch needed.
+        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
+            if !viewModel.accessibilityGranted {
+                viewModel.scan(target: tracker.lastActiveApp)
+            }
+        }
     }
 
     private var header: some View {

@@ -36,10 +36,20 @@ Two ways to open KeyOpen, both of which read the app you were just using:
 
 ## Permissions
 On first run, grant Accessibility: **System Settings → Privacy & Security →
-Accessibility** (this is the *privacy* pane that lists apps allowed to control
-your Mac — **not** the separate Accessibility features pane), and enable
-**KeyOpen**. Without it, only system shortcuts are shown. The packaged
-`KeyOpen.app` is ad-hoc signed, so the grant persists across rebuilds.
+Accessibility** (the *privacy* pane that lists apps allowed to control your Mac —
+**not** the separate Accessibility *features* pane), and enable **KeyOpen**.
+Without it, only system + other-app global-hotkey shortcuts show (reading the
+current app's menus needs it).
+
+**Keep the grant across rebuilds — run `./scripts/setup-signing.sh` once.** By
+default the app is *ad-hoc* signed, so its code identity changes on every rebuild
+and macOS **resets the Accessibility grant** each time you repackage (Settings may
+still show it enabled while the app reports "not granted" — that's a stale entry).
+`setup-signing.sh` creates a stable local signing identity so the grant sticks.
+If you land in the stale state, clear it and re-grant:
+```sh
+tccutil reset Accessibility com.hjl1045.KeyOpen
+```
 
 ## Scope & honesty
 KeyOpen reports combos that are free *among what it can see*: system shortcuts,

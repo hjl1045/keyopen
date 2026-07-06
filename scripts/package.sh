@@ -52,9 +52,17 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </plist>
 PLIST
 
-# Ad-hoc code-sign so the Accessibility permission sticks across rebuilds
-# (an unsigned binary gets a new identity each build and re-prompts).
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+# Sign with the stable self-signed identity if it exists (keeps Accessibility
+# across rebuilds); otherwise fall back to ad-hoc (which resets it each rebuild).
+IDENTITY="KeyOpen Self-Signed"
+if security find-identity -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
+    codesign --force --deep --sign "$IDENTITY" "$APP" >/dev/null 2>&1
+    echo "Signed with stable identity '$IDENTITY' — Accessibility grant will persist."
+else
+    codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+    echo "Ad-hoc signed. NOTE: run ./scripts/setup-signing.sh once so the"
+    echo "Accessibility permission stops resetting on every rebuild."
+fi
 
 echo "Built ./$APP"
 echo "Launch it with:  open $APP     (or double-click it in Finder)"

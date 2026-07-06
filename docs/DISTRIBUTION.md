@@ -122,6 +122,27 @@ works immediately and identically for users who know the tap name.
 
 ---
 
+## Troubleshooting: Accessibility keeps resetting
+
+Symptom: System Settings shows KeyOpen **enabled** under Accessibility, but the
+app still says *"Grant Accessibility…"*.
+
+Cause: ad-hoc signing gives the app an identity that is just its code hash, which
+changes on every rebuild. macOS ties the grant to that hash, so a rebuilt app no
+longer matches the authorized one — the Settings entry goes stale.
+
+Fix (once): `./scripts/setup-signing.sh` creates a **stable** self-signed
+identity; `package.sh` then signs with it, so the grant persists across rebuilds.
+To clear an already-stale entry:
+
+```sh
+tccutil reset Accessibility com.hjl1045.KeyOpen
+```
+
+then relaunch and grant once more. Note: whenever the signing identity *changes*
+(e.g. ad-hoc → self-signed, or later self-signed → Developer ID), you re-grant
+that one time.
+
 ## Summary
 
 | Goal | What you do | Gatekeeper |
