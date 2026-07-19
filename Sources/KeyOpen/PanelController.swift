@@ -22,13 +22,19 @@ final class PanelController {
     }
 
     private func show() {
-        let root = ScrollView { MenuContentView().environmentObject(tracker) }
-            .frame(width: 340, height: 520)
+        // No ScrollView here: the content scrolls its own list and caps its
+        // height, so wrapping it would nest two scrollers and let the header
+        // scroll away with everything else.
+        let root = MenuContentView().environmentObject(tracker)
         let hosting = NSHostingView(rootView: root)
 
         let panel = self.panel ?? makePanel()
         panel.contentView = hosting
-        panel.setContentSize(NSSize(width: 340, height: 520))
+        // Size to the content so a short list gets a short panel, but clamp:
+        // a ScrollView is happy to report almost any height, and neither a
+        // sliver nor a full-screen panel is a sane answer.
+        let fitted = hosting.fittingSize.height
+        panel.setContentSize(NSSize(width: 340, height: min(max(fitted, 220), 620)))
         positionOnActiveScreen(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
