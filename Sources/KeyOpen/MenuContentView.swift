@@ -19,10 +19,6 @@ struct MenuContentView: View {
     /// see `isExpanded(_:count:)`.
     @State private var overrides: [String: Bool] = [:]
 
-    /// Ceiling for the scrolling middle. Header and footer sit outside it, so
-    /// the panel can't outgrow its window however many sections are open.
-    private static let listMaxHeight: CGFloat = 420
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
@@ -35,6 +31,12 @@ struct MenuContentView: View {
                 // Only the list scrolls: ↻ stays reachable at the top and the
                 // caveat stays readable at the bottom, no matter how long the
                 // app's menu list is.
+                //
+                // The height is computed, not left to the ScrollView: a
+                // ScrollView's *ideal* height is zero, so `maxHeight` alone
+                // collapses it to nothing when the hosting view asks how tall
+                // it wants to be. Measuring the rows we're about to draw keeps
+                // a short list compact and a long one scrolling.
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         inUseSection(result)
@@ -42,7 +44,7 @@ struct MenuContentView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxHeight: Self.listMaxHeight)
+                .frame(height: listHeight(result))
             } else {
                 Text("Scanning…").foregroundStyle(.secondary)
             }
@@ -125,22 +127,46 @@ struct MenuContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
+    /// The sections as drawn, in order — shared by the renderer and the height
+    /// calculation so the two can't disagree about what's on screen.
+    /// `namingOwner` is true where rows mix apps and must name theirs.
+    private func sections(_ result: ScanResult)
+        -> [(title: String, bindings: [KeyOpenCore.Binding], namingOwner: Bool)] {
+        var out: [(String, [KeyOpenCore.Binding], Bool)] = [("System", result.systemBindings, false)]
+        if !result.appBindings.isEmpty {
+            // Includes this app's own global hotkeys, so the rows stay
+            // unqualified — the section header already names the app.
+            out.append((viewModel.appName ?? "App", result.appBindings, false))
+        }
+        if !result.globalBindings.isEmpty {
+            out.append(("Global hotkeys (other apps)", result.globalBindings, true))
+        }
+        return out.map { (title: $0.0, bindings: $0.1, namingOwner: $0.2) }
+    }
+
     private func inUseSection(_ result: ScanResult) -> some View {
         let conflicts = Dictionary(result.conflicts.map { ($0.combo, $0.bindings) },
                                    uniquingKeysWith: { first, _ in first })
         return VStack(alignment: .leading, spacing: 6) {
             Text("In use").font(.headline)
-            bindingRows("System", result.systemBindings, conflicts: conflicts)
-            if !result.appBindings.isEmpty {
-                // Includes this app's own global hotkeys, so the rows stay
-                // unqualified — the section header already names the app.
-                bindingRows(viewModel.appName ?? "App", result.appBindings, conflicts: conflicts)
-            }
-            if !result.globalBindings.isEmpty {
-                bindingRows("Global hotkeys (other apps)", result.globalBindings,
-                            conflicts: conflicts, namingOwner: true)
+            ForEach(sections(result), id: \.title) { section in
+                bindingRows(section.title, section.bindings,
+                            conflicts: conflicts, namingOwner: section.namingOwner)
             }
         }
+    }
+
+    private func listHeight(_ result: ScanResult) -> CGFloat {
+        let conflictCombos = Set(result.conflicts.map(\.combo))
+        let metrics = sections(result).map { section in
+            PanelLayout.SectionMetrics(
+                rows: section.bindings.count,
+                expanded: isExpanded(section.title, count: section.bindings.count),
+                conflicts: section.bindings.filter { conflictCombos.contains($0.combo) }.count
+            )
+        }
+        return PanelLayout.listHeight(sections: metrics,
+                                      recommendations: result.recommendations.count)
     }
 
     private func bindingRows(_ title: String,
