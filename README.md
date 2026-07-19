@@ -14,11 +14,11 @@ have registered — then ranks the ergonomic combos you could still claim.
 > and reports; you decide.
 
 <p align="center">
-  <img src="docs/panel.png" alt="The KeyOpen panel over Finder: open slots listed first in green, then the in-use sections — system shortcuts, Finder's 106 menu commands with 8 conflicts, and 23 global hotkeys from other apps." width="360">
+  <img src="docs/panel.png" alt="The KeyOpen panel: eight free combos listed first in green, then the in-use sections — system shortcuts, the current app's 103 menu commands with 10 conflicts, and 23 global hotkeys from other apps." width="360">
 </p>
 
-Standing in Finder: eight free combos up top, then what's taken. `⚠︎8` on a folded
-section means eight of its rows collide with something else.
+Eight free combos up top, then what's taken. `⚠︎10` on a folded section means ten
+of its rows collide with something else.
 
 ## Why
 
@@ -64,13 +64,17 @@ first. A combo whose simpler form on the same key is already bound (`⇧⌘D` wh
 
 **Color says what you can do with a key**, so a glance is usually enough:
 
-| | |
-|---|---|
-| 🟩 sage | free — take it |
-| 🟦 slate | macOS owns it; effectively off-limits |
-| 🟪 plum | another app's global hotkey — negotiable, rebind *that* app |
-| ⬜ grey | this app's menu commands; only matter while you're in it |
-| 🟧 amber | a conflict or a caveat |
+| Colour | Light | Dark | Meaning |
+|---|---|---|---|
+| sage | `#4C8666` | `#8CBFA3` | free — take it |
+| slate | `#517A9C` | `#93B4CE` | macOS owns it; effectively off-limits |
+| plum | `#7B6994` | `#B2A2C7` | another app's global hotkey — negotiable, rebind *that* app |
+| grey | — | — | this app's menu commands; only matter while you're in it |
+| amber | `#A96D3E` | `#D8A87A` | a conflict or a caveat |
+
+These are muted on purpose — the stock `.green` / `.blue` / `.purple` are system
+accent colours at full chroma, which shout over the text they're classifying.
+Each has a value per appearance rather than one compromise between light and dark.
 
 **Sections fold.** Anything over 12 rows starts collapsed — an app's fifty-command
 menu is a wall — and collapsed headers keep reporting their row and conflict
