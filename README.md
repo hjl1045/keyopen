@@ -88,7 +88,7 @@ the app's menu command never fires at all. The row says which one loses:
 
 ```
 ⇧⌘K   Network                                                        ⚠︎
-      Blocked by LocalFlow · Toggle Dictation — a global hotkey fires first
+      Blocked by <the app holding it> — a global hotkey fires first
 ```
 
 Every such note is inline rather than a tooltip — hover hints don't surface in a
@@ -107,27 +107,28 @@ among what we can see*.
 | Global hotkeys of Swift apps | the [`KeyboardShortcuts`](https://github.com/sindresorhus/KeyboardShortcuts) library's stored prefs |
 | Global hotkeys of known config-file apps | reading that app's own config |
 
-Apps using the `KeyboardShortcuts` library need no reader of their own — that row
-covers all of them at once (superwhisper, for one).
+Apps built with the `KeyboardShortcuts` library need no reader of their own —
+that row covers all of them at once.
 
-That last row needs a reader **per app**, because there is no shared format.
-Three apps, three encodings, none alike:
+That last row needs a reader **per app**, since there's no shared format. Read
+today: **Alfred**, **Keyboard Maestro**, **Wispr Flow**. Each stores hotkeys its
+own way — raw key codes, a Carbon modifier mask, a Cocoa one — and the decoders
+live in [`AppConfigHotkeyCollector.swift`](Sources/KeyOpenCore/AppConfigHotkeyCollector.swift),
+where each format is documented next to the code that parses it.
 
-| App | Where | Encoding |
-|---|---|---|
-| **Wispr Flow** | `~/Library/Application Support/Wispr Flow/config.json` | `+`-joined virtual key codes, modifiers as codes of their own: `"32+55+56": "popo"` = ⇧⌘U |
-| **Keyboard Maestro** | `~/Library/Application Support/Keyboard Maestro/Keyboard Maestro Macros.plist` | per-macro `HotKey` triggers, Carbon key code + **Carbon** modifier mask: `{KeyCode: 18, Modifiers: 6400}` = ⌃⌥⌘1 |
-| **Alfred** | `…/Alfred.alfredpreferences/preferences/local/<hash>/…/prefs.plist` | `{key: 49, mod: 1048576, string: " "}` — Carbon key code but a **Cocoa** `NSEvent` mask |
+If your launcher, macro tool, or dictation app isn't on that list, KeyOpen can't
+see its hotkeys and may offer one of them as free. Adding a reader is the most
+useful contribution here — see below.
 
 Only *running* apps are read, since a global hotkey is live only while its owner
-is — and it's the process that registers them that must be running, which for
-Keyboard Maestro is its background **engine**, not the editor. Disabled macros and
-macro groups are skipped; ones scoped to a single app are not, because a slot
-that's taken whenever that app is frontmost isn't free.
+is — and it's the process that registers them that has to be running, which for
+some tools is a background engine rather than the app window you know. Bindings
+the app has disabled are skipped; ones scoped to a single app are not, because a
+slot that's taken whenever that app is frontmost isn't free.
 
 A global hotkey belonging to the app you're currently in is listed **in that app's
-own section**, not under "other apps" — from where you're sitting, Wispr Flow's
-⇧⌘U is Wispr Flow's.
+own section** rather than under "other apps" — from where you're sitting, it's
+that app's key, not some other app's.
 
 ### Deliberately not read
 
@@ -152,9 +153,9 @@ a plausible-looking file.
 1. Find where the app persists hotkeys (`~/Library/Preferences/<bundleid>.plist`,
    `~/Library/Application Support/<App>/`).
 2. **Confirm the encoding against something independently known** — a hotkey you
-   set yourself, or the app's own rendering of it. Keyboard Maestro's mask was
-   verified by diffing against its engine's `getmacros with asstring` output;
-   Alfred's by decoding its ⌘Space with Spotlight's ⌘Space disabled.
+   set yourself, or the app's own rendering of it. The existing readers were each
+   checked this way before shipping: decode the file, then diff the result against
+   what the app itself says the binding is.
 3. Add a decoder in [`AppConfigHotkeyCollector.swift`](Sources/KeyOpenCore/AppConfigHotkeyCollector.swift),
    conforming to `SingleFileHotkeyConfig` where the app keeps one file.
 4. Add unit tests over a fixture **plus** an integration test that reads the real
