@@ -42,6 +42,29 @@ A command listed twice under one app — a File-menu "Close window" and a
 Window-menu "Close Window" are both ⌘W — is collapsed to a single row and not
 flagged as a conflict. Two *different* commands on one combo still are.
 
+## What KeyOpen can and can't see
+
+macOS has **no API to enumerate the global hotkeys apps have registered**, so
+"free" always means *free among what we can see*:
+
+| Source | How |
+|---|---|
+| System shortcuts | `com.apple.symbolichotkeys` preferences |
+| The current app's menu commands | Accessibility, walking its menu bar |
+| Global hotkeys of Swift apps | the `KeyboardShortcuts` library's stored prefs |
+| Global hotkeys of known config-file apps | reading that app's own config |
+
+That last row needs a reader per app, since there's no shared format. Currently
+implemented: **Wispr Flow** (Electron — hotkeys live in
+`~/Library/Application Support/Wispr Flow/config.json` as `+`-joined virtual key
+codes, e.g. `"32+55+56": "popo"` = ⇧⌘U). Only apps that are *running* are read,
+since a global hotkey is only live while its owner is.
+
+Adding another app means adding a decoder in
+[`AppConfigHotkeyCollector.swift`](Sources/KeyOpenCore/AppConfigHotkeyCollector.swift).
+It's worth the tedium: a hotkey we can't see doesn't just go unlisted, it gets
+**recommended as a free slot** — the one answer this app must not get wrong.
+
 ## Permissions
 On first run, grant Accessibility: **System Settings → Privacy & Security →
 Accessibility** (the *privacy* pane that lists apps allowed to control your Mac —

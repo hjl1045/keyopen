@@ -30,7 +30,12 @@ final class ScanViewModel: ObservableObject {
         Task.detached {
             let system = SystemShortcutCollector()
             let app: ShortcutCollector? = (granted && pid != nil) ? AppMenuCollector(pid: pid!) : nil
-            let globals = GlobalHotkeyCollector(apps: runningApps)
+            let globals = MergedCollector([
+                GlobalHotkeyCollector(apps: runningApps),
+                // Apps that keep hotkeys in their own config rather than in
+                // macOS preferences — otherwise they'd be offered as free slots.
+                AppConfigHotkeyCollector(runningBundleIDs: Set(runningApps.map(\.bundleID))),
+            ])
             let scan = ScanEngine.run(system: system, app: app, globals: globals)
             await MainActor.run {
                 guard generation == self.generation else { return } // superseded

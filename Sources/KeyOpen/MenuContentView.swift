@@ -30,7 +30,7 @@ struct MenuContentView: View {
             }
 
             Divider()
-            Text("Free among what we can see — system shortcuts, this app's menus, and global hotkeys read from other apps' settings. Apps that hide their hotkeys from macOS may still be missed.")
+            Text("Free among what we can see — system shortcuts, this app's menus, and global hotkeys read from other running apps' settings and config files. macOS can't list registered hotkeys, so an app storing them somewhere we don't know may still be missed.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
