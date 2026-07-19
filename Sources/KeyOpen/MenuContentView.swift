@@ -129,20 +129,15 @@ struct MenuContentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
+    /// Hue carries meaning: what can you actually do with this key? Sage you may
+    /// take, slate macOS owns, plum another app claims (and could be talked out
+    /// of), grey only matters while you're in this app. Amber is reserved for
+    /// trouble. Values live in `Palette`.
+    private typealias Tint = Palette
+
     /// The sections as drawn, in order — shared by the renderer and the height
     /// calculation so the two can't disagree about what's on screen.
     /// `namingOwner` is true where rows mix apps and must name theirs.
-    /// Hue carries meaning: what can you actually do with this key?
-    /// Green you may take, blue macOS owns, purple another app claims (and could
-    /// be talked out of), grey only matters while you're in this app. Orange is
-    /// reserved for conflicts.
-    private enum Tint {
-        static let free = Color.green
-        static let system = Color.blue
-        static let otherApps = Color.purple
-        static let thisApp = Color.secondary
-    }
-
     private func sections(_ result: ScanResult)
         -> [(title: String, bindings: [KeyOpenCore.Binding], namingOwner: Bool, tint: Color)] {
         var out: [(String, [KeyOpenCore.Binding], Bool, Color)] = [
@@ -203,7 +198,7 @@ struct MenuContentView: View {
                 // A hairline rail rather than a filled card — the color marks
                 // the group without boxing it in or eating vertical space.
                 HStack(alignment: .top, spacing: 8) {
-                    Capsule().fill(tint.opacity(0.35)).frame(width: 2)
+                    Capsule().fill(tint.opacity(Palette.railOpacity)).frame(width: 2)
                     VStack(alignment: .leading, spacing: 3) {
                         ForEach(rows) { row in
                             let rivals = (conflicts[row.binding.combo] ?? [])
@@ -218,7 +213,7 @@ struct MenuContentView: View {
                                         .lineLimit(1)
                                     if !rivals.isEmpty {
                                         Spacer(minLength: 0)
-                                        Text("⚠︎").foregroundStyle(.orange)
+                                        Text("⚠︎").foregroundStyle(Palette.warning)
                                     }
                                 }
                                 // Spelled out rather than hidden in a tooltip: a
@@ -229,7 +224,7 @@ struct MenuContentView: View {
                                                                 appName: viewModel.appName) {
                                     Text(note)
                                         .font(.system(size: 10))
-                                        .foregroundStyle(.orange)
+                                        .foregroundStyle(Palette.warning)
                                         .padding(.leading, 102)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -260,7 +255,7 @@ struct MenuContentView: View {
                 if conflicts > 0 {
                     Text("⚠︎\(conflicts)")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Palette.warning)
                 }
                 Spacer(minLength: 0)
             }
@@ -285,7 +280,7 @@ struct MenuContentView: View {
                     .foregroundStyle(.secondary)
             }
             HStack(alignment: .top, spacing: 8) {
-                Capsule().fill(Tint.free.opacity(0.35)).frame(width: 2)
+                Capsule().fill(Tint.free.opacity(Palette.railOpacity)).frame(width: 2)
                 VStack(alignment: .leading, spacing: 3) {
                     ForEach(result.recommendations, id: \.combo) { rec in
                         VStack(alignment: .leading, spacing: 1) {
@@ -301,7 +296,7 @@ struct MenuContentView: View {
                             if !rec.overlaps.isEmpty {
                                 Text("\(rec.overlaps.map(\.displayString).joined(separator: ", ")) already bound — stacks a modifier on a busy key")
                                     .font(.system(size: 10))
-                                    .foregroundStyle(.orange)
+                                    .foregroundStyle(Palette.warning)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
