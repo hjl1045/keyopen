@@ -84,10 +84,38 @@ The **↻** button rescans on demand. Because rescanning an unchanged app produc
 identical rows, the header shows `Updated HH:MM:SS` and a spinner while it runs,
 so you can tell it actually ran.
 
-**Open slots** are ranked. A combo whose simpler form on the same key is already
-bound (`⇧⌘D` when `⌘D` is taken) is still offered, but ranked below fully-clean
-keys and flagged `⚠︎ … in use` — usable, but it stacks a modifier onto a key that
-already means something else.
+**Open slots come first** — it's the answer the app exists to give, ranked best
+first. A combo whose simpler form on the same key is already bound (`⇧⌘D` when
+`⌘D` is taken) is still offered, but ranked below fully-clean keys and marked
+`already bound — stacks a modifier on a busy key`.
+
+**Color says what you can do with a key**, so a glance is usually enough:
+
+| | |
+|---|---|
+| 🟩 sage | free — take it |
+| 🟦 slate | macOS owns it; effectively off-limits |
+| 🟪 plum | another app's global hotkey — negotiable, rebind *that* app |
+| ⬜ grey | this app's menu commands; only matter while you're in it |
+| 🟧 amber | a conflict or a caveat |
+
+**Sections fold.** Anything over 12 rows starts collapsed — an app's fifty-command
+menu is a wall — and collapsed headers keep reporting their row and conflict
+counts (`▶ LINEAR 48 ⚠︎2`), so folding a section never hides that something in it
+needs attention. The list scrolls within a fixed ceiling; the header and the
+caveat below it stay put.
+
+**Conflicts explain themselves.** Two bindings on one combo are rarely equal
+partners: a global hotkey is dispatched before the frontmost app sees the key, so
+the app's menu command never fires at all. The row says which one loses:
+
+```
+⇧⌘K   Network                                                        ⚠︎
+      Blocked by LocalFlow · Toggle Dictation — a global hotkey fires first
+```
+
+Every such note is inline rather than a tooltip — hover hints don't surface in a
+menu-bar window, so anything hidden behind one is never read.
 
 ## What KeyOpen can and can't see
 
@@ -183,7 +211,7 @@ tccutil reset Accessibility com.hjl1045.KeyOpen
 ```sh
 swift build -c release
 .build/release/KeyOpen     # foreground; closing the terminal quits it
-swift test                 # 49 tests
+swift test                 # 61 tests
 ```
 
 The scan logic lives in `KeyOpenCore` as pure functions over `Data`, so every
