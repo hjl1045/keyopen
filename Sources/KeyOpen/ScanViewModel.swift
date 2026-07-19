@@ -25,6 +25,7 @@ final class ScanViewModel: ObservableObject {
         accessibilityGranted = granted
         appName = target?.localizedName
         let pid = target?.processIdentifier
+        let bundleID = target?.bundleIdentifier
         let runningApps = collectRunningApps()
 
         Task.detached {
@@ -36,7 +37,7 @@ final class ScanViewModel: ObservableObject {
                 // macOS preferences — otherwise they'd be offered as free slots.
                 AppConfigHotkeyCollector(runningBundleIDs: Set(runningApps.map(\.bundleID))),
             ])
-            let scan = ScanEngine.run(system: system, app: app, globals: globals)
+            let scan = ScanEngine.run(system: system, app: app, globals: globals, appBundleID: bundleID)
             await MainActor.run {
                 guard generation == self.generation else { return } // superseded
                 self.result = scan

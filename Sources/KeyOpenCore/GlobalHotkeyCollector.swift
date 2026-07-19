@@ -43,7 +43,10 @@ public struct GlobalHotkeyCollector: ShortcutCollector {
             for (key, value) in domain where key.hasPrefix("KeyboardShortcuts_") {
                 guard let str = value as? String, let combo = KeyboardShortcutsDecoder.decode(str) else { continue }
                 let name = key.replacingOccurrences(of: "KeyboardShortcuts_", with: "")
-                out.append(Binding(combo: combo, action: "\(app.name) · \(humanize(name))", source: .globalHotkey))
+                out.append(Binding(combo: combo,
+                                   action: humanize(name),
+                                   source: .globalHotkey,
+                                   owner: Owner(bundleID: app.bundleID, name: app.name)))
             }
         }
         return out

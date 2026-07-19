@@ -19,8 +19,10 @@ final class WisprFlowConfigTests: XCTestCase {
         let bindings = WisprFlowConfig.decode(sample)
         let handsFree = bindings.first { $0.action.contains("hands-free") }
         XCTAssertEqual(handsFree?.combo, KeyCombo(modifiers: [.shift, .command], key: "U"))
-        XCTAssertEqual(handsFree?.action, "Wispr Flow · Toggle dictation (hands-free)")
+        XCTAssertEqual(handsFree?.action, "Toggle dictation (hands-free)")
         XCTAssertEqual(handsFree?.source, .globalHotkey)
+        XCTAssertEqual(handsFree?.owner, Owner(bundleID: WisprFlowConfig.bundleID, name: "Wispr Flow"))
+        XCTAssertEqual(handsFree?.qualifiedAction, "Wispr Flow · Toggle dictation (hands-free)")
     }
 
     func testDecodesModifierOnlyAndPunctuationCombos() {

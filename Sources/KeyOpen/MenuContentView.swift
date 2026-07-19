@@ -113,17 +113,21 @@ struct MenuContentView: View {
             Text("In use").font(.headline)
             bindingRows("System", result.systemBindings, conflicts: conflictCombos)
             if !result.appBindings.isEmpty {
+                // Includes this app's own global hotkeys, so the rows stay
+                // unqualified — the section header already names the app.
                 bindingRows(viewModel.appName ?? "App", result.appBindings, conflicts: conflictCombos)
             }
             if !result.globalBindings.isEmpty {
-                bindingRows("Global hotkeys (other apps)", result.globalBindings, conflicts: conflictCombos)
+                bindingRows("Global hotkeys (other apps)", result.globalBindings,
+                            conflicts: conflictCombos, namingOwner: true)
             }
         }
     }
 
     private func bindingRows(_ title: String,
                              _ bindings: [KeyOpenCore.Binding],
-                             conflicts: Set<KeyCombo>) -> some View {
+                             conflicts: Set<KeyCombo>,
+                             namingOwner: Bool = false) -> some View {
         let rows = bindings.enumerated().map { Row(id: $0.offset, binding: $0.element) }
         return VStack(alignment: .leading, spacing: 3) {
             Text(title.uppercased())
@@ -134,7 +138,7 @@ struct MenuContentView: View {
                     Text(row.binding.combo.displayString)
                         .font(.system(size: 13, weight: .medium))
                         .frame(width: 96, alignment: .leading)
-                    Text(row.binding.action)
+                    Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
                         .font(.system(size: 13))
                         .lineLimit(1)
                     if conflicts.contains(row.binding.combo) {
