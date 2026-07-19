@@ -204,4 +204,4 @@ decoder is testable without the GUI. `KeyOpen` is the thin AppKit/SwiftUI shell.
 
 ## License
 
-[MIT](LICENSE) © Jieling Han
+[MIT](LICENSE) © Hansee
