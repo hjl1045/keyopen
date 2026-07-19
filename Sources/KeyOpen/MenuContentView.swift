@@ -108,25 +108,26 @@ struct MenuContentView: View {
     }
 
     private func inUseSection(_ result: ScanResult) -> some View {
-        let conflictCombos = Set(result.conflicts.map(\.combo))
+        let conflicts = Dictionary(result.conflicts.map { ($0.combo, $0.bindings) },
+                                   uniquingKeysWith: { first, _ in first })
         return VStack(alignment: .leading, spacing: 6) {
             Text("In use").font(.headline)
-            bindingRows("System", result.systemBindings, conflicts: conflictCombos)
+            bindingRows("System", result.systemBindings, conflicts: conflicts)
             if !result.appBindings.isEmpty {
                 // Includes this app's own global hotkeys, so the rows stay
                 // unqualified — the section header already names the app.
-                bindingRows(viewModel.appName ?? "App", result.appBindings, conflicts: conflictCombos)
+                bindingRows(viewModel.appName ?? "App", result.appBindings, conflicts: conflicts)
             }
             if !result.globalBindings.isEmpty {
                 bindingRows("Global hotkeys (other apps)", result.globalBindings,
-                            conflicts: conflictCombos, namingOwner: true)
+                            conflicts: conflicts, namingOwner: true)
             }
         }
     }
 
     private func bindingRows(_ title: String,
                              _ bindings: [KeyOpenCore.Binding],
-                             conflicts: Set<KeyCombo>,
+                             conflicts: [KeyCombo: [KeyOpenCore.Binding]],
                              namingOwner: Bool = false) -> some View {
         let rows = bindings.enumerated().map { Row(id: $0.offset, binding: $0.element) }
         return VStack(alignment: .leading, spacing: 3) {
@@ -134,18 +135,30 @@ struct MenuContentView: View {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(.secondary)
             ForEach(rows) { row in
-                HStack(spacing: 8) {
-                    Text(row.binding.combo.displayString)
-                        .font(.system(size: 13, weight: .medium))
-                        .frame(width: 96, alignment: .leading)
-                    Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
-                        .font(.system(size: 13))
-                        .lineLimit(1)
-                    if conflicts.contains(row.binding.combo) {
-                        Spacer(minLength: 0)
-                        Text("⚠︎")
+                let rivals = (conflicts[row.binding.combo] ?? []).filter { $0 != row.binding }
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 8) {
+                        Text(row.binding.combo.displayString)
+                            .font(.system(size: 13, weight: .medium))
+                            .frame(width: 96, alignment: .leading)
+                        Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
+                            .font(.system(size: 13))
+                            .lineLimit(1)
+                        if !rivals.isEmpty {
+                            Spacer(minLength: 0)
+                            Text("⚠︎").foregroundStyle(.orange)
+                        }
+                    }
+                    // Spelled out rather than hidden in a tooltip: a hover hint
+                    // is unreachable in a menu-bar window, and "conflicts with
+                    // another shortcut" never said which one, or which wins.
+                    if let note = ConflictNote.text(for: row.binding, rivals: rivals,
+                                                    appName: viewModel.appName) {
+                        Text(note)
+                            .font(.system(size: 10))
                             .foregroundStyle(.orange)
-                            .help("Conflicts with another shortcut")
+                            .padding(.leading, 104)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
