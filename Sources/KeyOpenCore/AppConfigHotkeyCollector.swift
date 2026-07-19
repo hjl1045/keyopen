@@ -56,8 +56,9 @@ public enum WisprFlowConfig {
                   let action = action as? String
             else { return nil }
             return Binding(combo: combo,
-                           action: "\(appName) · \(label(for: action))",
-                           source: .globalHotkey)
+                           action: label(for: action),
+                           source: .globalHotkey,
+                           owner: Owner(bundleID: bundleID, name: appName))
         }
         .sorted { $0.combo.displayString < $1.combo.displayString }
     }

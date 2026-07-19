@@ -74,6 +74,42 @@ final class ScanEngineTests: XCTestCase {
         XCTAssertEqual(result.conflicts.count, 1)
     }
 
+    /// Wispr Flow's own ⇧⌘U was listed under "Global hotkeys (other apps)" while
+    /// Wispr Flow *was* the app being inspected (THE-152).
+    func testTheInspectedAppsOwnGlobalHotkeysAreNotFiledUnderOtherApps() {
+        let wispr = Owner(bundleID: "com.electron.wispr-flow", name: "Wispr Flow")
+        let localFlow = Owner(bundleID: "com.hjl1045.LocalFlow", name: "LocalFlow")
+        let globals = FakeCollector(bindings: [
+            Binding(combo: KeyCombo(modifiers: [.shift, .command], key: "U"),
+                    action: "Toggle dictation (hands-free)", source: .globalHotkey, owner: wispr),
+            Binding(combo: KeyCombo(modifiers: [.shift, .command], key: "K"),
+                    action: "Toggle Dictation", source: .globalHotkey, owner: localFlow),
+        ])
+
+        let result = ScanEngine.run(system: FakeCollector(bindings: []),
+                                    app: FakeCollector(bindings: []),
+                                    globals: globals,
+                                    appBundleID: wispr.bundleID)
+
+        XCTAssertEqual(result.appBindings.map(\.action), ["Toggle dictation (hands-free)"])
+        XCTAssertEqual(result.globalBindings.map(\.owner?.name), ["LocalFlow"])
+        // In its own section the app's name is the header, not every row.
+        XCTAssertEqual(result.appBindings.first?.qualifiedAction,
+                       "Wispr Flow · Toggle dictation (hands-free)")
+    }
+
+    func testGlobalHotkeysStayUnderOtherAppsWhenInspectingSomethingElse() {
+        let globals = FakeCollector(bindings: [
+            Binding(combo: KeyCombo(modifiers: [.shift, .command], key: "U"),
+                    action: "Toggle dictation", source: .globalHotkey,
+                    owner: Owner(bundleID: "com.electron.wispr-flow", name: "Wispr Flow")),
+        ])
+        let result = ScanEngine.run(system: FakeCollector(bindings: []), app: nil,
+                                    globals: globals, appBundleID: "com.apple.finder")
+        XCTAssertTrue(result.appBindings.isEmpty)
+        XCTAssertEqual(result.globalBindings.count, 1)
+    }
+
     func testGlobalHotkeysAreTakenAndExcludedFromRecommendations() {
         let shiftCmdK = KeyCombo(modifiers: [.shift, .command], key: "K")
         let system = FakeCollector(bindings: [])
