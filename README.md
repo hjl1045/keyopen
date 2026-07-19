@@ -54,6 +54,10 @@ macOS has **no API to enumerate the global hotkeys apps have registered**, so
 | Global hotkeys of Swift apps | the `KeyboardShortcuts` library's stored prefs |
 | Global hotkeys of known config-file apps | reading that app's own config |
 
+A global hotkey belonging to the app you're currently in is listed **in that
+app's own section**, not under "Global hotkeys (other apps)" — from where you're
+sitting, Wispr Flow's ⇧⌘U is Wispr Flow's.
+
 That last row needs a reader per app, since there's no shared format. Currently
 implemented: **Wispr Flow** (Electron — hotkeys live in
 `~/Library/Application Support/Wispr Flow/config.json` as `+`-joined virtual key

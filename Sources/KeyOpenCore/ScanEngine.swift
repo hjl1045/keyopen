@@ -7,13 +7,21 @@ public struct ScanResult: Sendable {
 }
 
 public enum ScanEngine {
+    /// - Parameter appBundleID: bundle id of the app being inspected. Its *own*
+    ///   global hotkeys are listed with its menu commands rather than under
+    ///   "other apps" — from where you're sitting, Wispr Flow's ⇧⌘U is Wispr
+    ///   Flow's, not some other app's.
     public static func run(system: ShortcutCollector,
                            app: ShortcutCollector?,
                            globals: ShortcutCollector? = nil,
+                           appBundleID: String? = nil,
                            recommender: Recommender = Recommender()) -> ScanResult {
         let systemBindings = deduplicated(system.collect())
-        let appBindings = deduplicated(app?.collect() ?? [])
-        let globalBindings = deduplicated(globals?.collect() ?? [])
+        let allGlobals = deduplicated(globals?.collect() ?? [])
+        let (ownGlobals, globalBindings) = allGlobals.partitioned {
+            appBundleID != nil && $0.owner?.bundleID == appBundleID
+        }
+        let appBindings = deduplicated(app?.collect() ?? []) + ownGlobals
 
         var map = ShortcutMap()
         for b in systemBindings { map.add(b) }
@@ -44,10 +52,12 @@ public enum ScanEngine {
         let combo: KeyCombo
         let action: String
         let source: Source
+        let owner: Owner?
 
         init(_ binding: Binding) {
             combo = binding.combo
             source = binding.source
+            owner = binding.owner
             action = binding.action
                 .replacingOccurrences(of: "…", with: "")
                 .replacingOccurrences(of: "...", with: "")
@@ -55,5 +65,17 @@ public enum ScanEngine {
                 .split(whereSeparator: \.isWhitespace)
                 .joined(separator: " ")
         }
+    }
+}
+
+private extension Array {
+    /// Splits into (matching, rest), preserving order.
+    func partitioned(by matches: (Element) -> Bool) -> ([Element], [Element]) {
+        var yes: [Element] = []
+        var no: [Element] = []
+        for element in self {
+            if matches(element) { yes.append(element) } else { no.append(element) }
+        }
+        return (yes, no)
     }
 }
