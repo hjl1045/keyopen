@@ -37,6 +37,43 @@ final class ScanEngineTests: XCTestCase {
         XCTAssertEqual(result.systemBindings.count, 1)
     }
 
+    /// Wispr Flow lists ⌘W twice — "Close window" and "Close Window" — which
+    /// showed up as two rows that flagged each other as conflicting (THE-152).
+    func testCaseOnlyDuplicateMenuItemsCollapseToOneRow() {
+        let cmdW = KeyCombo(modifiers: [.command], key: "W")
+        let app = FakeCollector(bindings: [
+            Binding(combo: cmdW, action: "Close window", source: .appMenu),
+            Binding(combo: cmdW, action: "Close Window", source: .appMenu),
+        ])
+
+        let result = ScanEngine.run(system: FakeCollector(bindings: []), app: app)
+
+        XCTAssertEqual(result.appBindings.map(\.action), ["Close window"])
+        XCTAssertTrue(result.conflicts.isEmpty)
+    }
+
+    func testEllipsisAndSpacingVariantsAreTheSameCommand() {
+        let cmdComma = KeyCombo(modifiers: [.command], key: ",")
+        let deduped = ScanEngine.deduplicated([
+            Binding(combo: cmdComma, action: "Settings…", source: .appMenu),
+            Binding(combo: cmdComma, action: "Settings...", source: .appMenu),
+            Binding(combo: cmdComma, action: "  Settings ", source: .appMenu),
+        ])
+        XCTAssertEqual(deduped.count, 1)
+    }
+
+    func testDistinctActionsOnTheSameComboStillConflict() {
+        let cmdSpace = self.cmdSpace
+        let system = FakeCollector(bindings: [
+            Binding(combo: cmdSpace, action: "Spotlight", source: .system)
+        ])
+        let app = FakeCollector(bindings: [
+            Binding(combo: cmdSpace, action: "Command Palette", source: .appMenu)
+        ])
+        let result = ScanEngine.run(system: system, app: app)
+        XCTAssertEqual(result.conflicts.count, 1)
+    }
+
     func testGlobalHotkeysAreTakenAndExcludedFromRecommendations() {
         let shiftCmdK = KeyCombo(modifiers: [.shift, .command], key: "K")
         let system = FakeCollector(bindings: [])
