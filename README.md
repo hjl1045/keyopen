@@ -13,39 +13,12 @@ have registered — then ranks the ergonomic combos you could still claim.
 > **Suggest-only.** KeyOpen never changes a binding or a system setting. It reads
 > and reports; you decide.
 
-<!-- TODO: replace this layout sketch with a real screenshot of the panel -->
+<p align="center">
+  <img src="docs/panel.png" alt="The KeyOpen panel over Finder: open slots listed first in green, then the in-use sections — system shortcuts, Finder's 106 menu commands with 8 conflicts, and 23 global hotkeys from other apps." width="360">
+</p>
 
-The panel, standing in Safari (layout sketch — not a screenshot):
-
-```
-┌─────────────────────────────────────────────┐
-│ Safari                                   ↻  │
-│ Updated 12:17:24                            │
-│                                             │
-│ In use                                      │
-│ SYSTEM                                      │
-│   ⌥SPACE     Select the previous input source
-│   ⌃↑         Mission Control                │
-│ SAFARI                                      │
-│   ⌘T         New Tab                        │
-│   ⌘⇧A        Show Downloads               ⚠︎ │
-│   ⌘L         Open Location…                 │
-│ GLOBAL HOTKEYS (OTHER APPS)                 │
-│   ⌘SPACE     Alfred · Show Alfred           │
-│   ⌃⌥SPACE    Keyboard Maestro · Quick Entry │
-│   ⇧⌘U        Wispr Flow · Toggle dictation  │
-│                                             │
-│ Open slots                                  │
-│   ⇧⌘J                                       │
-│   ⇧⌘B                                       │
-│   ⇧⌘Y                                       │
-│                                             │
-│ Free among what we can see — system         │
-│ shortcuts, this app's menus, and global…    │
-└─────────────────────────────────────────────┘
-```
-
-`⚠︎` marks a combo claimed more than once. **Open slots** are what's left.
+Standing in Finder: eight free combos up top, then what's taken. `⚠︎8` on a folded
+section means eight of its rows collide with something else.
 
 ## Why
 
