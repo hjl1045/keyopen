@@ -38,9 +38,11 @@ struct MenuContentView: View {
                 // it wants to be. Measuring the rows we're about to draw keeps
                 // a short list compact and a long one scrolling.
                 ScrollView {
+                    // Open slots first: it's the answer the app exists to give,
+                    // and under a 50-command menu list nobody ever scrolled to it.
                     VStack(alignment: .leading, spacing: 10) {
-                        inUseSection(result)
                         openSlotsSection(result)
+                        inUseSection(result)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -130,18 +132,31 @@ struct MenuContentView: View {
     /// The sections as drawn, in order — shared by the renderer and the height
     /// calculation so the two can't disagree about what's on screen.
     /// `namingOwner` is true where rows mix apps and must name theirs.
+    /// Hue carries meaning: what can you actually do with this key?
+    /// Green you may take, blue macOS owns, purple another app claims (and could
+    /// be talked out of), grey only matters while you're in this app. Orange is
+    /// reserved for conflicts.
+    private enum Tint {
+        static let free = Color.green
+        static let system = Color.blue
+        static let otherApps = Color.purple
+        static let thisApp = Color.secondary
+    }
+
     private func sections(_ result: ScanResult)
-        -> [(title: String, bindings: [KeyOpenCore.Binding], namingOwner: Bool)] {
-        var out: [(String, [KeyOpenCore.Binding], Bool)] = [("System", result.systemBindings, false)]
+        -> [(title: String, bindings: [KeyOpenCore.Binding], namingOwner: Bool, tint: Color)] {
+        var out: [(String, [KeyOpenCore.Binding], Bool, Color)] = [
+            ("System", result.systemBindings, false, Tint.system)
+        ]
         if !result.appBindings.isEmpty {
             // Includes this app's own global hotkeys, so the rows stay
             // unqualified — the section header already names the app.
-            out.append((viewModel.appName ?? "App", result.appBindings, false))
+            out.append((viewModel.appName ?? "App", result.appBindings, false, Tint.thisApp))
         }
         if !result.globalBindings.isEmpty {
-            out.append(("Global hotkeys (other apps)", result.globalBindings, true))
+            out.append(("Global hotkeys (other apps)", result.globalBindings, true, Tint.otherApps))
         }
-        return out.map { (title: $0.0, bindings: $0.1, namingOwner: $0.2) }
+        return out.map { (title: $0.0, bindings: $0.1, namingOwner: $0.2, tint: $0.3) }
     }
 
     private func inUseSection(_ result: ScanResult) -> some View {
@@ -150,8 +165,8 @@ struct MenuContentView: View {
         return VStack(alignment: .leading, spacing: 6) {
             Text("In use").font(.headline)
             ForEach(sections(result), id: \.title) { section in
-                bindingRows(section.title, section.bindings,
-                            conflicts: conflicts, namingOwner: section.namingOwner)
+                bindingRows(section.title, section.bindings, conflicts: conflicts,
+                            namingOwner: section.namingOwner, tint: section.tint)
             }
         }
     }
@@ -165,48 +180,60 @@ struct MenuContentView: View {
                 conflicts: section.bindings.filter { conflictCombos.contains($0.combo) }.count
             )
         }
-        return PanelLayout.listHeight(sections: metrics,
-                                      recommendations: result.recommendations.count)
+        return PanelLayout.listHeight(
+            sections: metrics,
+            recommendations: result.recommendations.count,
+            caveatedRecommendations: result.recommendations.filter { !$0.overlaps.isEmpty }.count)
     }
 
     private func bindingRows(_ title: String,
                              _ bindings: [KeyOpenCore.Binding],
                              conflicts: [KeyCombo: [KeyOpenCore.Binding]],
-                             namingOwner: Bool = false) -> some View {
+                             namingOwner: Bool = false,
+                             tint: Color = .secondary) -> some View {
         let rows = bindings.enumerated().map { Row(id: $0.offset, binding: $0.element) }
         let flagged = bindings.filter { binding in
             (conflicts[binding.combo] ?? []).contains { $0 != binding }
         }.count
         let open = isExpanded(title, count: bindings.count)
         return VStack(alignment: .leading, spacing: 3) {
-            sectionHeader(title, count: bindings.count, conflicts: flagged, isOpen: open)
+            sectionHeader(title, count: bindings.count, conflicts: flagged,
+                          isOpen: open, tint: tint)
             if open {
-                ForEach(rows) { row in
-                    let rivals = (conflicts[row.binding.combo] ?? []).filter { $0 != row.binding }
-                    VStack(alignment: .leading, spacing: 1) {
-                        HStack(spacing: 8) {
-                            Text(row.binding.combo.displayString)
-                                .font(.system(size: 13, weight: .medium))
-                                .frame(width: 96, alignment: .leading)
-                            Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
-                                .font(.system(size: 13))
-                                .lineLimit(1)
-                            if !rivals.isEmpty {
-                                Spacer(minLength: 0)
-                                Text("⚠︎").foregroundStyle(.orange)
+                // A hairline rail rather than a filled card — the color marks
+                // the group without boxing it in or eating vertical space.
+                HStack(alignment: .top, spacing: 8) {
+                    Capsule().fill(tint.opacity(0.35)).frame(width: 2)
+                    VStack(alignment: .leading, spacing: 3) {
+                        ForEach(rows) { row in
+                            let rivals = (conflicts[row.binding.combo] ?? [])
+                                .filter { $0 != row.binding }
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 8) {
+                                    Text(row.binding.combo.displayString)
+                                        .font(.system(size: 13, weight: .medium))
+                                        .frame(width: 94, alignment: .leading)
+                                    Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
+                                        .font(.system(size: 13))
+                                        .lineLimit(1)
+                                    if !rivals.isEmpty {
+                                        Spacer(minLength: 0)
+                                        Text("⚠︎").foregroundStyle(.orange)
+                                    }
+                                }
+                                // Spelled out rather than hidden in a tooltip: a
+                                // hover hint is unreachable in a menu-bar window,
+                                // and "conflicts with another shortcut" never said
+                                // which one, or which wins.
+                                if let note = ConflictNote.text(for: row.binding, rivals: rivals,
+                                                                appName: viewModel.appName) {
+                                    Text(note)
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.orange)
+                                        .padding(.leading, 102)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
-                        }
-                        // Spelled out rather than hidden in a tooltip: a hover
-                        // hint is unreachable in a menu-bar window, and
-                        // "conflicts with another shortcut" never said which
-                        // one, or which wins.
-                        if let note = ConflictNote.text(for: row.binding, rivals: rivals,
-                                                        appName: viewModel.appName) {
-                            Text(note)
-                                .font(.system(size: 10))
-                                .foregroundStyle(.orange)
-                                .padding(.leading, 104)
-                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
@@ -217,8 +244,8 @@ struct MenuContentView: View {
     /// A tappable section header. Collapsed sections still report their size and
     /// any conflicts inside them — folding a section away must never fold away
     /// the fact that something in it needs attention.
-    private func sectionHeader(_ title: String, count: Int,
-                               conflicts: Int, isOpen: Bool) -> some View {
+    private func sectionHeader(_ title: String, count: Int, conflicts: Int,
+                               isOpen: Bool, tint: Color) -> some View {
         Button {
             overrides[title] = !isOpen
         } label: {
@@ -237,7 +264,7 @@ struct MenuContentView: View {
                 }
                 Spacer(minLength: 0)
             }
-            .foregroundStyle(.secondary)
+            .foregroundStyle(tint)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -251,19 +278,34 @@ struct MenuContentView: View {
 
     private func openSlotsSection(_ result: ScanResult) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Open slots").font(.headline)
-            ForEach(result.recommendations, id: \.combo) { rec in
-                HStack(spacing: 8) {
-                    Text(rec.combo.displayString)
-                        .font(.system(size: 13, weight: .medium))
-                        .frame(width: 96, alignment: .leading)
-                    if !rec.overlaps.isEmpty {
-                        Text("⚠︎ \(rec.overlaps.map(\.displayString).joined(separator: ", ")) in use")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                            .help("Usable, but this key already has a simpler shortcut — may be confusing.")
+            HStack(spacing: 6) {
+                Text("Open slots").font(.headline).foregroundStyle(Tint.free)
+                Text("best first")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
+            HStack(alignment: .top, spacing: 8) {
+                Capsule().fill(Tint.free.opacity(0.35)).frame(width: 2)
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(result.recommendations, id: \.combo) { rec in
+                        VStack(alignment: .leading, spacing: 1) {
+                            HStack(spacing: 8) {
+                                Text(rec.combo.displayString)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(Tint.free)
+                                    .frame(width: 94, alignment: .leading)
+                                Spacer(minLength: 0)
+                            }
+                            // Same reasoning as the conflict notes: inline, not
+                            // on hover, or the caveat is never read.
+                            if !rec.overlaps.isEmpty {
+                                Text("\(rec.overlaps.map(\.displayString).joined(separator: ", ")) already bound — stacks a modifier on a busy key")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.orange)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                     }
-                    Spacer(minLength: 0)
                 }
             }
         }

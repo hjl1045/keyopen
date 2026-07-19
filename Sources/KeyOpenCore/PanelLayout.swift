@@ -34,8 +34,11 @@ public enum PanelLayout {
 
     /// Deliberately approximate: whatever this under-counts simply scrolls,
     /// which is what the ScrollView is there for. Over-counting is capped.
+    /// - Parameter caveatedRecommendations: open slots carrying an inline
+    ///   "already bound" note, which costs an extra line each.
     public static func listHeight(sections: [SectionMetrics],
-                                  recommendations: Int) -> CGFloat {
+                                  recommendations: Int,
+                                  caveatedRecommendations: Int = 0) -> CGFloat {
         var height = titleHeight // "In use"
         for section in sections {
             height += sectionHeaderHeight
@@ -44,6 +47,7 @@ public enum PanelLayout {
             height += CGFloat(section.conflicts) * conflictNoteHeight
         }
         height += titleHeight + CGFloat(recommendations) * rowHeight // "Open slots"
+        height += CGFloat(caveatedRecommendations) * conflictNoteHeight
         return min(max(height, minListHeight), maxListHeight)
     }
 }
