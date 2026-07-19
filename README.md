@@ -13,7 +13,39 @@ have registered — then ranks the ergonomic combos you could still claim.
 > **Suggest-only.** KeyOpen never changes a binding or a system setting. It reads
 > and reports; you decide.
 
-<!-- TODO: screenshot of the panel goes here -->
+<!-- TODO: replace this layout sketch with a real screenshot of the panel -->
+
+The panel, standing in Safari (layout sketch — not a screenshot):
+
+```
+┌─────────────────────────────────────────────┐
+│ Safari                                   ↻  │
+│ Updated 12:17:24                            │
+│                                             │
+│ In use                                      │
+│ SYSTEM                                      │
+│   ⌥SPACE     Select the previous input source
+│   ⌃↑         Mission Control                │
+│ SAFARI                                      │
+│   ⌘T         New Tab                        │
+│   ⌘⇧A        Show Downloads               ⚠︎ │
+│   ⌘L         Open Location…                 │
+│ GLOBAL HOTKEYS (OTHER APPS)                 │
+│   ⌘SPACE     Alfred · Show Alfred           │
+│   ⌃⌥SPACE    Keyboard Maestro · Quick Entry │
+│   ⇧⌘U        Wispr Flow · Toggle dictation  │
+│                                             │
+│ Open slots                                  │
+│   ⇧⌘J                                       │
+│   ⇧⌘B                                       │
+│   ⇧⌘Y                                       │
+│                                             │
+│ Free among what we can see — system         │
+│ shortcuts, this app's menus, and global…    │
+└─────────────────────────────────────────────┘
+```
+
+`⚠︎` marks a combo claimed more than once. **Open slots** are what's left.
 
 ## Why
 
