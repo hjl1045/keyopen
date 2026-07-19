@@ -47,9 +47,14 @@ final class PanelController {
     }
 
     private func makePanel() -> NSPanel {
+        // Deliberately *not* `.fullSizeContentView`: that draws the content
+        // under the titlebar, and the titlebar keeps taking the mouse — so the
+        // refresh button in the top-right of the header sat in a dead zone and
+        // dragged the window instead of firing. Keeping content below the
+        // titlebar makes the whole header clickable.
         let panel = NSPanel(
             contentRect: NSRect(x: 0, y: 0, width: 340, height: 520),
-            styleMask: [.titled, .closable, .fullSizeContentView],
+            styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
         )
