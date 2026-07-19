@@ -14,6 +14,15 @@ struct MenuContentView: View {
         let binding: KeyOpenCore.Binding
     }
 
+    /// Sections the reader has explicitly opened or closed, by title. Absent
+    /// means "use the default", which depends on how long the section is —
+    /// see `isExpanded(_:count:)`.
+    @State private var overrides: [String: Bool] = [:]
+
+    /// Ceiling for the scrolling middle. Header and footer sit outside it, so
+    /// the panel can't outgrow its window however many sections are open.
+    private static let listMaxHeight: CGFloat = 420
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
@@ -23,8 +32,17 @@ struct MenuContentView: View {
             }
 
             if let result = viewModel.result {
-                inUseSection(result)
-                openSlotsSection(result)
+                // Only the list scrolls: ↻ stays reachable at the top and the
+                // caveat stays readable at the bottom, no matter how long the
+                // app's menu list is.
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        inUseSection(result)
+                        openSlotsSection(result)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(maxHeight: Self.listMaxHeight)
             } else {
                 Text("Scanning…").foregroundStyle(.secondary)
             }
@@ -130,39 +148,79 @@ struct MenuContentView: View {
                              conflicts: [KeyCombo: [KeyOpenCore.Binding]],
                              namingOwner: Bool = false) -> some View {
         let rows = bindings.enumerated().map { Row(id: $0.offset, binding: $0.element) }
+        let flagged = bindings.filter { binding in
+            (conflicts[binding.combo] ?? []).contains { $0 != binding }
+        }.count
+        let open = isExpanded(title, count: bindings.count)
         return VStack(alignment: .leading, spacing: 3) {
-            Text(title.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(.secondary)
-            ForEach(rows) { row in
-                let rivals = (conflicts[row.binding.combo] ?? []).filter { $0 != row.binding }
-                VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 8) {
-                        Text(row.binding.combo.displayString)
-                            .font(.system(size: 13, weight: .medium))
-                            .frame(width: 96, alignment: .leading)
-                        Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
-                            .font(.system(size: 13))
-                            .lineLimit(1)
-                        if !rivals.isEmpty {
-                            Spacer(minLength: 0)
-                            Text("⚠︎").foregroundStyle(.orange)
+            sectionHeader(title, count: bindings.count, conflicts: flagged, isOpen: open)
+            if open {
+                ForEach(rows) { row in
+                    let rivals = (conflicts[row.binding.combo] ?? []).filter { $0 != row.binding }
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(spacing: 8) {
+                            Text(row.binding.combo.displayString)
+                                .font(.system(size: 13, weight: .medium))
+                                .frame(width: 96, alignment: .leading)
+                            Text(namingOwner ? row.binding.qualifiedAction : row.binding.action)
+                                .font(.system(size: 13))
+                                .lineLimit(1)
+                            if !rivals.isEmpty {
+                                Spacer(minLength: 0)
+                                Text("⚠︎").foregroundStyle(.orange)
+                            }
                         }
-                    }
-                    // Spelled out rather than hidden in a tooltip: a hover hint
-                    // is unreachable in a menu-bar window, and "conflicts with
-                    // another shortcut" never said which one, or which wins.
-                    if let note = ConflictNote.text(for: row.binding, rivals: rivals,
-                                                    appName: viewModel.appName) {
-                        Text(note)
-                            .font(.system(size: 10))
-                            .foregroundStyle(.orange)
-                            .padding(.leading, 104)
-                            .fixedSize(horizontal: false, vertical: true)
+                        // Spelled out rather than hidden in a tooltip: a hover
+                        // hint is unreachable in a menu-bar window, and
+                        // "conflicts with another shortcut" never said which
+                        // one, or which wins.
+                        if let note = ConflictNote.text(for: row.binding, rivals: rivals,
+                                                        appName: viewModel.appName) {
+                            Text(note)
+                                .font(.system(size: 10))
+                                .foregroundStyle(.orange)
+                                .padding(.leading, 104)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
                 }
             }
         }
+    }
+
+    /// A tappable section header. Collapsed sections still report their size and
+    /// any conflicts inside them — folding a section away must never fold away
+    /// the fact that something in it needs attention.
+    private func sectionHeader(_ title: String, count: Int,
+                               conflicts: Int, isOpen: Bool) -> some View {
+        Button {
+            overrides[title] = !isOpen
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: isOpen ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                Text(title.uppercased())
+                    .font(.system(size: 10, weight: .semibold))
+                Text("\(count)")
+                    .font(.system(size: 10))
+                    .opacity(0.6)
+                if conflicts > 0 {
+                    Text("⚠︎\(conflicts)")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.orange)
+                }
+                Spacer(minLength: 0)
+            }
+            .foregroundStyle(.secondary)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Long sections start folded, short ones don't — an app's 50-command menu
+    /// is a wall, its 3 system shortcuts aren't. An explicit tap always wins.
+    private func isExpanded(_ title: String, count: Int) -> Bool {
+        overrides[title] ?? (count <= 12)
     }
 
     private func openSlotsSection(_ result: ScanResult) -> some View {
