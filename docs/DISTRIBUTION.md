@@ -26,7 +26,7 @@ Same as Tier 1, on that machine:
 
 ```sh
 git clone <this repo>
-cd macos-shortcut-helper
+cd keyopen
 ./scripts/package.sh && open KeyOpen.app
 ```
 
@@ -96,10 +96,10 @@ cask "keyopen" do
   version "0.1.0"
   sha256 "PUT_THE_SHASUM_HERE"
 
-  url "https://github.com/hjl1045/macos-shortcut-helper/releases/download/v#{version}/KeyOpen-#{version}.zip"
+  url "https://github.com/hjl1045/keyopen/releases/download/v#{version}/KeyOpen-#{version}.zip"
   name "KeyOpen"
   desc "Menu-bar helper that shows in-use keyboard shortcuts and recommends free ones"
-  homepage "https://github.com/hjl1045/macos-shortcut-helper"
+  homepage "https://github.com/hjl1045/keyopen"
 
   app "KeyOpen.app"
 

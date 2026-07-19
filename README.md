@@ -35,8 +35,8 @@ falls out of the data model needed to answer it.
 No notarized release yet; build it yourself (~10 seconds):
 
 ```sh
-git clone https://github.com/hjl1045/macos-shortcut-helper.git
-cd macos-shortcut-helper
+git clone https://github.com/hjl1045/keyopen.git
+cd keyopen
 ./scripts/package.sh
 mv KeyOpen.app /Applications/ && open /Applications/KeyOpen.app
 ```
