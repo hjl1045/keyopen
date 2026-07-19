@@ -34,6 +34,14 @@ Two ways to open KeyOpen, both of which read the app you were just using:
   close the panel) to dismiss. Handy when you're mid-setup in another app and
   want a free combo. (The hotkey also needs the Accessibility permission.)
 
+The **↻** button in the top-right rescans on demand. Since a rescan of an
+unchanged app produces identical rows, the header shows `Updated HH:MM:SS`
+(and a spinner while it runs) so you can tell it actually ran.
+
+A command listed twice under one app — a File-menu "Close window" and a
+Window-menu "Close Window" are both ⌘W — is collapsed to a single row and not
+flagged as a conflict. Two *different* commands on one combo still are.
+
 ## Permissions
 On first run, grant Accessibility: **System Settings → Privacy & Security →
 Accessibility** (the *privacy* pane that lists apps allowed to control your Mac —

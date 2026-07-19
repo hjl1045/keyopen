@@ -6,6 +6,8 @@ struct MenuContentView: View {
     @EnvironmentObject private var tracker: FrontmostTracker
     @StateObject private var viewModel = ScanViewModel()
 
+    private static let permissionRecheck = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
+
     // Wrapper so rows have a stable identity even when two bindings share a combo.
     private struct Row: Identifiable {
         let id: Int
@@ -37,7 +39,9 @@ struct MenuContentView: View {
         .onAppear { viewModel.scan(target: tracker.lastActiveApp) }
         // While access is missing, re-check so the banner clears itself the
         // moment you grant it — no manual refresh or relaunch needed.
-        .onReceive(Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()) { _ in
+        // The publisher is shared, not rebuilt per `body`: a fresh timer each
+        // time would restart its countdown and might never fire.
+        .onReceive(Self.permissionRecheck) { _ in
             if !viewModel.accessibilityGranted {
                 viewModel.scan(target: tracker.lastActiveApp)
             }
@@ -45,15 +49,48 @@ struct MenuContentView: View {
     }
 
     private var header: some View {
-        HStack {
-            Text(viewModel.appName ?? "No app").font(.headline)
+        HStack(spacing: 8) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(viewModel.appName ?? "No app").font(.headline)
+                Text(scanStatus)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             Button {
                 viewModel.scan(target: tracker.lastActiveApp)
-            } label: { Image(systemName: "arrow.clockwise") }
-                .buttonStyle(.borderless)
+            } label: {
+                ZStack {
+                    Image(systemName: "arrow.clockwise")
+                        .opacity(viewModel.isScanning ? 0 : 1)
+                    if viewModel.isScanning {
+                        ProgressView().controlSize(.small)
+                    }
+                }
+                // The bare glyph is a ~13pt target tucked into the window
+                // corner — easy to miss, and a miss looks like a dead button.
+                // Pad it to a full 28pt square and make all of it clickable.
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .help("Rescan \(viewModel.appName ?? "the frontmost app")")
         }
     }
+
+    /// Rescanning an unchanged app produces identical rows, so the header
+    /// carries the proof that something happened.
+    private var scanStatus: String {
+        if viewModel.isScanning { return "Scanning…" }
+        guard let lastScanned = viewModel.lastScanned else { return " " }
+        return "Updated \(Self.clock.string(from: lastScanned))"
+    }
+
+    private static let clock: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
+    }()
 
     private var permissionBanner: some View {
         VStack(alignment: .leading, spacing: 4) {

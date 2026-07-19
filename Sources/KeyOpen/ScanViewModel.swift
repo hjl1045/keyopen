@@ -8,8 +8,18 @@ final class ScanViewModel: ObservableObject {
     @Published var appName: String?
     @Published var accessibilityGranted = true
     @Published var isScanning = false
+    /// When the displayed result was produced. A rescan of an unchanged app
+    /// looks identical, so this is what tells you the refresh actually ran.
+    @Published var lastScanned: Date?
+
+    /// Identifies the newest scan, so a slow earlier one can't overwrite it.
+    /// Clicks are never dropped while a scan is in flight — that would look
+    /// exactly like the button doing nothing.
+    private var generation = 0
 
     func scan(target: NSRunningApplication?) {
+        generation += 1
+        let generation = self.generation
         isScanning = true
         let granted = AXIsProcessTrusted()
         accessibilityGranted = granted
@@ -23,7 +33,9 @@ final class ScanViewModel: ObservableObject {
             let globals = GlobalHotkeyCollector(apps: runningApps)
             let scan = ScanEngine.run(system: system, app: app, globals: globals)
             await MainActor.run {
+                guard generation == self.generation else { return } // superseded
                 self.result = scan
+                self.lastScanned = Date()
                 self.isScanning = false
             }
         }
