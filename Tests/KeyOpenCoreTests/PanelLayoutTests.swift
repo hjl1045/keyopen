@@ -61,6 +61,13 @@ final class PanelLayoutTests: XCTestCase {
         XCTAssertGreaterThan(height, PanelLayout.minListHeight)
     }
 
+    func testCaveatedOpenSlotsGetRoomForTheirNote() {
+        let plain = PanelLayout.listHeight(sections: [], recommendations: 6)
+        let caveated = PanelLayout.listHeight(sections: [], recommendations: 6,
+                                              caveatedRecommendations: 2)
+        XCTAssertEqual(caveated - plain, 2 * PanelLayout.conflictNoteHeight)
+    }
+
     func testConflictNotesAreCountedSoTheirRowsAreNotClipped() {
         let clean = PanelLayout.SectionMetrics(rows: 10, expanded: true, conflicts: 0)
         let flagged = PanelLayout.SectionMetrics(rows: 10, expanded: true, conflicts: 3)
