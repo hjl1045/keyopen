@@ -94,6 +94,13 @@ the app's menu command never fires at all. The row says which one loses:
 Every such note is inline rather than a tooltip — hover hints don't surface in a
 menu-bar window, so anything hidden behind one is never read.
 
+**The ⋯ menu** beside ↻ holds About (version and update status), Send Feedback,
+Launch at Login and Quit. KeyOpen checks GitHub Releases once a day; when a newer
+version exists, one line at the bottom of the panel says so. Nothing shows otherwise.
+If KeyOpen crashed since its last launch, it offers to email the crash report macOS
+saved. The report opens as a Mail draft for you to read and send yourself. KeyOpen
+never sends anything on its own.
+
 ## What KeyOpen can and can't see
 
 This is the honest part, and it's load-bearing: **macOS has no API to enumerate

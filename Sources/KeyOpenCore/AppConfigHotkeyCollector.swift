@@ -19,6 +19,9 @@ public struct AppConfigHotkeyCollector: ShortcutCollector {
         AlfredConfig.self,
     ]
 
+    /// The apps we have a reader for, for the About window.
+    public static var readerNames: [String] { configs.map { $0.appName } }
+
     private let runningBundleIDs: Set<String>
     private let home: URL
 

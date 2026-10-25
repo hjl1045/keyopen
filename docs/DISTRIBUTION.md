@@ -86,6 +86,13 @@ Make the repo (or at least its **Releases**) public, then attach the notarized
 shasum -a 256 dist/KeyOpen-<version>.zip
 ```
 
+The app's update check reads this: it asks GitHub for the latest release and
+compares its tag to the running `CFBundleShortVersionString` (set in
+`scripts/package.sh`, so bump it there before building). Tag `v<version>`, and title
+the release by what it adds ("Adds a Raycast reader"). The panel shows that title
+in its "KeyOpen 0.2.0 is out — …" line, and a title that just repeats the version is
+dropped. Drafts and pre-releases are never offered.
+
 ### 4c. Publish a cask (your own tap is easiest)
 
 Create a GitHub repo named **`homebrew-tap`** under your account and add
