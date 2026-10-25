@@ -4,6 +4,8 @@ import KeyOpenCore
 
 struct MenuContentView: View {
     @EnvironmentObject private var tracker: FrontmostTracker
+    @EnvironmentObject private var actions: AppActions
+    @EnvironmentObject private var updates: UpdateChecker
     @StateObject private var viewModel = ScanViewModel()
 
     private static let permissionRecheck = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
@@ -55,6 +57,22 @@ struct MenuContentView: View {
             Text("Free among what we can see — system shortcuts, this app's menus, and global hotkeys read from other running apps' settings and config files. macOS can't list registered hotkeys, so an app storing them somewhere we don't know may still be missed.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            // Only when there's news: an up-to-date app shows nothing here.
+            if let release = updates.availableRelease {
+                HStack(alignment: .top, spacing: 8) {
+                    Capsule().fill(Tint.free.opacity(Palette.railOpacity)).frame(width: 2)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(release.headline)
+                        Button("What's new ›") { NSWorkspace.shared.open(release.url) }
+                            .buttonStyle(.plain)
+                            .fontWeight(.semibold)
+                    }
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Tint.free)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+            }
         }
         .padding(16)
         .frame(width: 340)
@@ -97,7 +115,32 @@ struct MenuContentView: View {
             }
             .buttonStyle(.borderless)
             .help("Rescan \(viewModel.appName ?? "the frontmost app")")
+
+            moreMenu
         }
+    }
+
+    /// Version, updates, feedback and Quit — the panel had no way to quit at all.
+    private var moreMenu: some View {
+        Menu {
+            Button("About KeyOpen") { actions.showAbout() }
+            // The About window is where the answer shows, so that's where this goes.
+            Button("Check for Updates…") { actions.showAbout() }
+            Button("Send Feedback…") { actions.showFeedback() }
+            Divider()
+            Toggle("Launch at Login", isOn: SwiftUI.Binding(get: { actions.launchAtLogin },
+                                                    set: { actions.setLaunchAtLogin($0) }))
+            Divider()
+            Button("Quit KeyOpen") { NSApp.terminate(nil) }
+                .keyboardShortcut("q")
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        // Same 28pt target as ↻ beside it.
+        .frame(width: 28, height: 28)
+        .help("About, updates and feedback")
     }
 
     /// Rescanning an unchanged app produces identical rows, so the header

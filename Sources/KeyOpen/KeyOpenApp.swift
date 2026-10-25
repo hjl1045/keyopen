@@ -8,6 +8,8 @@ struct KeyOpenApp: App {
         MenuBarExtra("KeyOpen", systemImage: "keyboard") {
             MenuContentView()
                 .environmentObject(appDelegate.tracker)
+                .environmentObject(appDelegate.actions)
+                .environmentObject(appDelegate.actions.updates)
         }
         .menuBarExtraStyle(.window)
     }

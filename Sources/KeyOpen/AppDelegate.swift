@@ -5,6 +5,7 @@ import Carbon.HIToolbox
 final class AppDelegate: NSObject, NSApplicationDelegate {
     /// One shared tracker feeds both the menu-bar panel and the global-hotkey panel.
     let tracker = FrontmostTracker()
+    let actions = AppActions()
     private var panelController: PanelController?
     private var hotkey: GlobalHotkey?
 
@@ -12,8 +13,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Menu-bar-only app: no Dock icon, no main window.
         NSApp.setActivationPolicy(.accessory)
 
-        let controller = PanelController(tracker: tracker)
+        let controller = PanelController(tracker: tracker, actions: actions)
         self.panelController = controller
+        actions.dismissPanel = { [weak controller] in controller?.hide() }
+        actions.updates.start()
+        actions.offerCrashReportIfAny()
 
         // Global hotkey: ⌃⌥⌘K. Includes ⌘+⌃, so it avoids macOS Sequoia's
         // restriction on Option-only / Option+Shift-only global hotkeys.

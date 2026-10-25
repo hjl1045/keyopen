@@ -7,10 +7,16 @@ import SwiftUI
 @MainActor
 final class PanelController {
     private let tracker: FrontmostTracker
+    private let actions: AppActions
     private var panel: NSPanel?
 
-    init(tracker: FrontmostTracker) {
+    init(tracker: FrontmostTracker, actions: AppActions) {
         self.tracker = tracker
+        self.actions = actions
+    }
+
+    func hide() {
+        panel?.orderOut(nil)
     }
 
     func toggle() {
@@ -25,7 +31,10 @@ final class PanelController {
         // No ScrollView here: the content scrolls its own list and caps its
         // height, so wrapping it would nest two scrollers and let the header
         // scroll away with everything else.
-        let root = MenuContentView().environmentObject(tracker)
+        let root = MenuContentView()
+            .environmentObject(tracker)
+            .environmentObject(actions)
+            .environmentObject(actions.updates)
         let hosting = NSHostingView(rootView: root)
 
         let panel = self.panel ?? makePanel()
