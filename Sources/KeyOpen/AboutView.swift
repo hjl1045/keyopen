@@ -42,27 +42,22 @@ struct AboutView: View {
             .controlSize(.large)
             .padding(.top, 14)
 
+            // No email address here: Send Feedback already writes to it, and the
+            // address was what got truncated. The coffee link opens KeyOpen's
+            // page, where the tip button sits beside the download, rather than
+            // jumping a stranger straight to a payment page.
             HStack(spacing: 4) {
-                Link("Release notes", destination: UpdateCheck.releasesPage)
-                Text("·").foregroundStyle(.secondary)
+                Link("Release notes", destination: UpdateCheck.homePage)
                 if !LibraryAccess.isSandboxed {
-                    Link("Buy me a coffee ☕", destination: UpdateCheck.tipPage)
-                        .fontWeight(.semibold)
                     Text("·").foregroundStyle(.secondary)
+                    Link("Buy me a coffee ☕", destination: UpdateCheck.homePage)
+                        .fontWeight(.semibold)
                 }
-                Link(Feedback.email, destination: URL(string: "mailto:\(Feedback.email)")!)
             }
             .font(.system(size: 11.5))
             .tint(Palette.system)
             .padding(.top, 12)
 
-            Text("Readers: system, menus, KeyboardShortcuts apps, "
-                 + AppConfigHotkeyCollector.readerNames.joined(separator: ", "))
-                .font(.system(size: 10.5))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 10)
         }
         .padding(.horizontal, 26)
         .padding(.bottom, 22)
