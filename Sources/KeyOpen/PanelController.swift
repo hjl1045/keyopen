@@ -35,6 +35,7 @@ final class PanelController {
             .environmentObject(tracker)
             .environmentObject(actions)
             .environmentObject(actions.updates)
+            .environmentObject(actions.library)
         let hosting = NSHostingView(rootView: root)
 
         let panel = self.panel ?? makePanel()

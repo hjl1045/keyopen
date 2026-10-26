@@ -10,6 +10,7 @@ struct KeyOpenApp: App {
                 .environmentObject(appDelegate.tracker)
                 .environmentObject(appDelegate.actions)
                 .environmentObject(appDelegate.actions.updates)
+                .environmentObject(appDelegate.actions.library)
         }
         .menuBarExtraStyle(.window)
     }

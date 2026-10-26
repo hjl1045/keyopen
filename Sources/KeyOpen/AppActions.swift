@@ -7,6 +7,7 @@ import SwiftUI
 @MainActor
 final class AppActions: ObservableObject {
     let updates = UpdateChecker()
+    let library = LibraryAccess()
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     /// Hides the hotkey panel before a window opens: it floats, and would sit
@@ -16,7 +17,8 @@ final class AppActions: ObservableObject {
     private var windows: [String: NSWindow] = [:]
 
     func showAbout() {
-        updates.check()
+        // The App Store updates its own apps; a second mechanism isn't allowed there.
+        if !LibraryAccess.isSandboxed { updates.check() }
         present("about", AboutView(onFeedback: { [weak self] in self?.showFeedback() })
             .environmentObject(updates))
     }
@@ -50,8 +52,9 @@ final class AppActions: ObservableObject {
         // First launch: crashes from before this feature existed aren't news.
         guard let since = defaults.object(forKey: Self.lastCrashCheckKey) as? Date else { return }
 
-        let directory = FileManager.default.homeDirectoryForCurrentUser
-            .appending(path: CrashReports.relativeDirectory)
+        // Inside the Library, so a sandboxed build sees it once access is granted.
+        guard let library = library.library else { return }
+        let directory = library.deletingLastPathComponent().appending(path: CrashReports.relativeDirectory)
         let urls = (try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: [.contentModificationDateKey])) ?? []
         let entries = urls.compactMap { url -> CrashReports.Entry? in

@@ -1,11 +1,13 @@
 import SwiftUI
 import Combine
+import ApplicationServices
 import KeyOpenCore
 
 struct MenuContentView: View {
     @EnvironmentObject private var tracker: FrontmostTracker
     @EnvironmentObject private var actions: AppActions
     @EnvironmentObject private var updates: UpdateChecker
+    @EnvironmentObject private var libraryAccess: LibraryAccess
     @StateObject private var viewModel = ScanViewModel()
 
     private static let permissionRecheck = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
@@ -25,7 +27,13 @@ struct MenuContentView: View {
         VStack(alignment: .leading, spacing: 10) {
             header
 
-            if !viewModel.accessibilityGranted {
+            if libraryAccess.library == nil {
+                libraryBanner
+            }
+
+            // Sandboxed, Accessibility can be granted but still can't read
+            // another app's menus (AX error -25204), so don't ask for it.
+            if !viewModel.accessibilityGranted && !LibraryAccess.isSandboxed {
                 permissionBanner
             }
 
@@ -43,7 +51,11 @@ struct MenuContentView: View {
                     // Open slots first: it's the answer the app exists to give,
                     // and under a 50-command menu list nobody ever scrolled to it.
                     VStack(alignment: .leading, spacing: 10) {
-                        openSlotsSection(result)
+                        // Without the Library, system shortcuts and other
+                        // apps' hotkeys are invisible, so "free" would be a guess.
+                        if libraryAccess.library != nil {
+                            openSlotsSection(result)
+                        }
                         inUseSection(result)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -54,7 +66,9 @@ struct MenuContentView: View {
             }
 
             Divider()
-            Text("Free among what we can see — system shortcuts, this app's menus, and global hotkeys read from other running apps' settings and config files. macOS can't list registered hotkeys, so an app storing them somewhere we don't know may still be missed.")
+            Text(LibraryAccess.isSandboxed
+                 ? "Free among what we can see — system shortcuts and global hotkeys read from other running apps' settings and config files. This edition can't read the current app's menus, so a combo may still clash with one of them."
+                 : "Free among what we can see — system shortcuts, this app's menus, and global hotkeys read from other running apps' settings and config files. macOS can't list registered hotkeys, so an app storing them somewhere we don't know may still be missed.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -76,14 +90,16 @@ struct MenuContentView: View {
         }
         .padding(16)
         .frame(width: 340)
-        .onAppear { viewModel.scan(target: tracker.lastActiveApp) }
+        .onAppear { rescan() }
+        // The moment access is granted, show what it unlocked.
+        .onChange(of: libraryAccess.library) { _ in rescan() }
         // While access is missing, re-check so the banner clears itself the
         // moment you grant it — no manual refresh or relaunch needed.
         // The publisher is shared, not rebuilt per `body`: a fresh timer each
         // time would restart its countdown and might never fire.
         .onReceive(Self.permissionRecheck) { _ in
-            if !viewModel.accessibilityGranted {
-                viewModel.scan(target: tracker.lastActiveApp)
+            if !viewModel.accessibilityGranted && !LibraryAccess.isSandboxed {
+                rescan()
             }
         }
     }
@@ -98,7 +114,7 @@ struct MenuContentView: View {
             }
             Spacer()
             Button {
-                viewModel.scan(target: tracker.lastActiveApp)
+                rescan()
             } label: {
                 ZStack {
                     Image(systemName: "arrow.clockwise")
@@ -125,7 +141,9 @@ struct MenuContentView: View {
         Menu {
             Button("About KeyOpen") { actions.showAbout() }
             // The About window is where the answer shows, so that's where this goes.
-            Button("Check for Updates…") { actions.showAbout() }
+            if !LibraryAccess.isSandboxed {
+                Button("Check for Updates…") { actions.showAbout() }
+            }
             Button("Send Feedback…") { actions.showFeedback() }
             Divider()
             Toggle("Launch at Login", isOn: SwiftUI.Binding(get: { actions.launchAtLogin },
@@ -157,11 +175,41 @@ struct MenuContentView: View {
         return formatter
     }()
 
+    private func rescan() {
+        viewModel.scan(target: tracker.lastActiveApp, store: libraryAccess.store)
+    }
+
+    private func shownRecommendations(_ result: ScanResult) -> [Recommendation] {
+        libraryAccess.library == nil ? [] : result.recommendations
+    }
+
+    /// App Store build only: the sandbox hides ~/Library until it's granted once.
+    private var libraryBanner: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Grant access to your Library folder so KeyOpen can see system shortcuts and other apps' hotkeys. Free combos appear after that.")
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+            if let problem = libraryAccess.problem {
+                Text(problem).font(.caption).foregroundStyle(Palette.warning)
+            }
+            Button("Grant Library Access…") { libraryAccess.requestAccess() }
+        }
+        .padding(8)
+        .background(Color.yellow.opacity(0.15))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
     private var permissionBanner: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Grant Accessibility to see this app's shortcuts.")
                 .font(.callout)
             Button("Open Accessibility Settings") {
+                // Asking with the prompt option is what puts KeyOpen in the
+                // list. Opening the pane alone shows a list with no KeyOpen in
+                // it and nothing to switch on: found when a fresh (sandboxed)
+                // install wasn't listed.
+                let prompt = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+                _ = AXIsProcessTrustedWithOptions([prompt: true] as CFDictionary)
                 if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
                     NSWorkspace.shared.open(url)
                 }
@@ -220,8 +268,8 @@ struct MenuContentView: View {
         }
         return PanelLayout.listHeight(
             sections: metrics,
-            recommendations: result.recommendations.count,
-            caveatedRecommendations: result.recommendations.filter { !$0.overlaps.isEmpty }.count)
+            recommendations: shownRecommendations(result).count,
+            caveatedRecommendations: shownRecommendations(result).filter { !$0.overlaps.isEmpty }.count)
     }
 
     private func bindingRows(_ title: String,

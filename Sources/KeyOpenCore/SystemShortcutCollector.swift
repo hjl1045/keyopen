@@ -71,8 +71,8 @@ public struct SystemShortcutCollector: ShortcutCollector {
         self.bindings = SymbolicHotkeyParser.parse(rawHotkeys)
     }
 
-    public init() {
-        let domain = UserDefaults.standard.persistentDomain(forName: "com.apple.symbolichotkeys")
+    public init(store: PreferenceStore = .userDefaults) {
+        let domain = store.domain("com.apple.symbolichotkeys")
         let raw = (domain?["AppleSymbolicHotKeys"] as? [String: Any]) ?? [:]
         self.bindings = SymbolicHotkeyParser.parse(raw)
     }

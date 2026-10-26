@@ -129,7 +129,32 @@ works immediately and identically for users who know the tap name.
 
 ---
 
-## Troubleshooting: Accessibility keeps resetting
+## Tier 5 — Mac App Store edition (sandboxed)
+
+```sh
+./scripts/package.sh --sandbox   # → "KeyOpen Sandbox.app", its own bundle id, sandboxed
+```
+
+The App Store requires App Sandbox, where `~` is the app's own container. The
+same binary detects that at runtime (`APP_SANDBOX_CONTAINER_ID`) and changes
+three things:
+
+- **Preferences come from files.** The user grants `~/Library` once through an
+  open panel (`files.user-selected.read-only`); the choice is kept as a
+  security-scoped bookmark that reopens without asking. Plists are then read
+  from disk (`PreferenceStore.files`) instead of through `UserDefaults`. Tested
+  2026-10-25: it reads the same system shortcuts and global hotkeys as the
+  direct build.
+- **No current-app menus.** Accessibility can be granted (the user must add the
+  app with **+** in System Settings, because the sandbox suppresses the prompt),
+  but reading another app's menu bar still fails with `-25204` (cannotComplete).
+  Apple DTS confirms sandboxed apps can't read other processes this way. That
+  section of the panel stays empty in this edition.
+- **No update check.** The App Store updates its own apps.
+
+No temporary-exception entitlements: App Review rejects them.
+
+
 
 Symptom: System Settings shows KeyOpen **enabled** under Accessibility, but the
 app still says *"Grant Accessibility…"*.

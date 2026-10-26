@@ -31,15 +31,17 @@ public struct GlobalHotkeyCollector: ShortcutCollector {
     }
 
     private let apps: [App]
+    private let store: PreferenceStore
 
-    public init(apps: [App]) {
+    public init(apps: [App], store: PreferenceStore = .userDefaults) {
         self.apps = apps
+        self.store = store
     }
 
     public func collect() -> [Binding] {
         var out: [Binding] = []
         for app in apps {
-            guard let domain = UserDefaults.standard.persistentDomain(forName: app.bundleID) else { continue }
+            guard let domain = store.domain(app.bundleID) else { continue }
             for (key, value) in domain where key.hasPrefix("KeyboardShortcuts_") {
                 guard let str = value as? String, let combo = KeyboardShortcutsDecoder.decode(str) else { continue }
                 let name = key.replacingOccurrences(of: "KeyboardShortcuts_", with: "")
