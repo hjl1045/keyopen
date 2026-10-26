@@ -34,15 +34,15 @@ public struct AppVersion: Comparable, CustomStringConvertible {
     }
 }
 
-/// A published KeyOpen release, as GitHub describes it.
+/// A published KeyOpen release, as the site's feed describes it.
 public struct Release: Equatable {
     public let version: AppVersion
     public let url: URL
-    /// The release's title on GitHub, when it says more than the tag does.
+    /// What the release adds, in a few words.
     public let title: String?
 
-    /// "KeyOpen 0.2.0 is out — Adds a Raycast reader". Name releases by what
-    /// they add and this line explains itself; a bare tag gives the short form.
+    /// "KeyOpen 0.2.0 is out — Adds a Raycast reader"; without a title, the
+    /// short form.
     public var headline: String {
         let lead = "KeyOpen \(version) is out"
         guard let title else { return lead + "." }
@@ -50,45 +50,47 @@ public struct Release: Equatable {
     }
 }
 
-/// Asks GitHub whether a newer release exists. No auto-install: the answer is a
-/// link, and Homebrew users update through `brew` anyway.
+/// Asks theautonomes.ai whether a newer release exists. No auto-install: the
+/// answer is a link to the download page.
 public enum UpdateCheck {
     public static let repository = URL(string: "https://github.com/hjl1045/keyopen")!
-    public static let releasesPage = URL(string: "https://github.com/hjl1045/keyopen/releases")!
-    public static let latestReleaseAPI =
-        URL(string: "https://api.github.com/repos/hjl1045/keyopen/releases/latest")!
+    /// Download and release notes, rendered from the same feed.
+    public static let releasesPage = URL(string: "https://www.theautonomes.ai/keyopen")!
+    public static let feed = URL(string: "https://www.theautonomes.ai/keyopen/releases.json")!
+    /// A redirect on the site to the tip page, so the tip service can change
+    /// without shipping a new build.
+    public static let tipPage = URL(string: "https://www.theautonomes.ai/keyopen/coffee")!
 
     public enum Outcome: Equatable {
         case upToDate
         case available(Release)
     }
 
-    /// Reads GitHub's `releases/latest` response. That endpoint never returns
-    /// drafts or pre-releases, so whatever it names is fair to offer.
-    ///
-    /// Returns nil when we can't tell — offline, rate-limited, a payload we
-    /// don't recognise — so the caller can say "couldn't check" rather than
-    /// claim the user is current.
+    /// Reads the release feed. Returns nil when we can't tell — offline, a
+    /// payload we don't recognise — so the caller can say "couldn't check"
+    /// rather than claim the user is current.
     public static func evaluate(statusCode: Int, body: Data, current: AppVersion) -> Outcome? {
-        // 404 is what GitHub answers until the first release is published.
-        if statusCode == 404 { return .upToDate }
         guard statusCode == 200, let release = decodeLatest(body) else { return nil }
         return release.version > current ? .available(release) : .upToDate
     }
 
+    /// The feed is the site's `releases.json`: newest first, the same list the
+    /// download page renders as "What's new", so the two can't disagree.
+    ///
+    ///     [{"version": "0.2.0", "date": "2026-10-26", "title": "Adds an About window",
+    ///       "notes": ["…"], "download": "https://…/KeyOpen-0.2.0.zip"}]
     static func decodeLatest(_ data: Data) -> Release? {
-        struct Payload: Decodable {
-            let tag_name: String
-            let name: String?
-            let html_url: URL
+        struct Entry: Decodable {
+            let version: String
+            let title: String?
         }
-        guard let payload = try? JSONDecoder().decode(Payload.self, from: data),
-              let version = AppVersion(payload.tag_name)
-        else { return nil }
-        let name = payload.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        // GitHub fills an untitled release's name with "" or repeats the tag.
-        let saysMore = !name.isEmpty && AppVersion(name) == nil
-            && name != payload.tag_name && name != "KeyOpen \(version)"
-        return Release(version: version, url: payload.html_url, title: saysMore ? name : nil)
+        guard let entries = try? JSONDecoder().decode([Entry].self, from: data) else { return nil }
+        // Highest version wins even if someone appends instead of prepending.
+        let releases = entries.compactMap { entry -> Release? in
+            guard let version = AppVersion(entry.version) else { return nil }
+            let title = entry.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return Release(version: version, url: releasesPage, title: title.isEmpty ? nil : title)
+        }
+        return releases.max { $0.version < $1.version }
     }
 }

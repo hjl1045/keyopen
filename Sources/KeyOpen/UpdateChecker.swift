@@ -22,7 +22,7 @@ enum AppInfo {
     }
 }
 
-/// Checks GitHub for a newer release at launch and once a day after.
+/// Checks the site's release feed at launch and once a day after.
 @MainActor
 final class UpdateChecker: ObservableObject {
     enum State: Equatable {
@@ -51,8 +51,8 @@ final class UpdateChecker: ObservableObject {
         // A `swift run` build has no Info.plist version to compare against.
         guard let current = AppVersion(AppInfo.version) else { state = .failed; return }
         state = .checking
-        var request = URLRequest(url: UpdateCheck.latestReleaseAPI)
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        // Skip caches: a stale feed would hide a release for as long as it lives.
+        let request = URLRequest(url: UpdateCheck.feed, cachePolicy: .reloadIgnoringLocalCacheData)
         Task {
             let outcome: UpdateCheck.Outcome?
             do {

@@ -77,21 +77,29 @@ Without notarization you *can* still publish a cask, but users must pass
 `--no-quarantine` or right-click-Open — not a good public experience, and the
 official `homebrew-cask` repo won't accept it.
 
-### 4b. Host a release
+### 4b. Host a release (on theautonomes.ai)
 
-Make the repo (or at least its **Releases**) public, then attach the notarized
-`KeyOpen-<version>.zip` to a GitHub Release tagged `v<version>`. Grab its SHA:
+Releases live on the company site, not GitHub Releases. `./scripts/release.sh`
+signs with the Developer ID, notarizes, staples, and writes
+`dist/KeyOpen-<version>.zip`. Then, in `Websites/autonomes-web`:
+
+1. Copy the zip to `public/downloads/`.
+2. Add the release to the **top** of `public/keyopen/releases.json`:
+   `version`, `date`, a `title` saying what it adds, `notes`, and `download`.
+3. Merge. Vercel deploys, and `/keyopen` shows the new download and notes.
+
+That same `releases.json` is the app's update feed. The app compares the highest
+`version` there to its own `CFBundleShortVersionString` (bump it in
+`scripts/package.sh` before building). The panel's "KeyOpen 0.2.0 is out — …"
+line uses the `title`. Check a release the way a downloader sees it:
 
 ```sh
-shasum -a 256 dist/KeyOpen-<version>.zip
+curl -sO https://www.theautonomes.ai/downloads/KeyOpen-<version>.zip
+ditto -x -k KeyOpen-<version>.zip out && spctl --assess --type execute -v out/KeyOpen.app
 ```
 
-The app's update check reads this: it asks GitHub for the latest release and
-compares its tag to the running `CFBundleShortVersionString` (set in
-`scripts/package.sh`, so bump it there before building). Tag `v<version>`, and title
-the release by what it adds ("Adds a Raycast reader"). The panel shows that title
-in its "KeyOpen 0.2.0 is out — …" line, and a title that just repeats the version is
-dropped. Drafts and pre-releases are never offered.
+In-app tips open `https://www.theautonomes.ai/keyopen/coffee`, a redirect in the
+site's `vercel.json`. Change its destination to change the tip page, with no app release.
 
 ### 4c. Publish a cask (your own tap is easiest)
 
@@ -103,7 +111,7 @@ cask "keyopen" do
   version "0.1.0"
   sha256 "PUT_THE_SHASUM_HERE"
 
-  url "https://github.com/hjl1045/keyopen/releases/download/v#{version}/KeyOpen-#{version}.zip"
+  url "https://www.theautonomes.ai/downloads/KeyOpen-#{version}.zip"
   name "KeyOpen"
   desc "Menu-bar helper that shows in-use keyboard shortcuts and recommends free ones"
   homepage "https://github.com/hjl1045/keyopen"
