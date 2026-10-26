@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  The App Store build. The sandbox hides ~/Library, so the user grants it once
+  through an open panel (user-selected, read-only) and the choice is kept as a
+  security-scoped bookmark. No temporary exceptions: App Review rejects them.
+  No network entitlement: the App Store build has no update check.
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key><true/>
+    <key>com.apple.security.files.user-selected.read-only</key><true/>
+    <key>com.apple.security.files.bookmarks.app-scope</key><true/>
+</dict>
+</plist>

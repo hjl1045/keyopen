@@ -1,12 +1,27 @@
 #!/usr/bin/env bash
 # Builds a standalone KeyOpen.app you can launch from Finder (no terminal needed).
+#
+#   ./scripts/package.sh            the direct build (KeyOpen.app)
+#   ./scripts/package.sh --sandbox  the App Store build, sandboxed, as a separate
+#                                   app (KeyOpen Sandbox.app) so it can be tried
+#                                   next to the installed one
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+APP="KeyOpen.app"
+BUNDLE_ID="com.hjl1045.KeyOpen"
+DISPLAY_NAME="KeyOpen"
+ENTITLEMENTS=()
+if [ "${1:-}" = "--sandbox" ]; then
+    APP="KeyOpen Sandbox.app"
+    BUNDLE_ID="com.hjl1045.KeyOpen.sandbox"
+    DISPLAY_NAME="KeyOpen Sandbox"
+    ENTITLEMENTS=(--entitlements scripts/KeyOpen-AppStore.entitlements)
+fi
 
 echo "Building release binary…"
 swift build -c release
 
-APP="KeyOpen.app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp .build/release/KeyOpen "$APP/Contents/MacOS/KeyOpen"
@@ -30,14 +45,14 @@ if command -v iconutil >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; then
     fi
 fi
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key><string>KeyOpen</string>
-    <key>CFBundleDisplayName</key><string>KeyOpen</string>
-    <key>CFBundleIdentifier</key><string>com.hjl1045.KeyOpen</string>
+    <key>CFBundleDisplayName</key><string>$DISPLAY_NAME</string>
+    <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
     <key>CFBundleExecutable</key><string>KeyOpen</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIconName</key><string>AppIcon</string>
@@ -60,15 +75,15 @@ if [ -z "$SIGN_ID" ]; then
     SIGN_ID="$(security find-identity -p codesigning -v 2>/dev/null \
         | awk 'match($0, /[0-9A-F]{40}/) { print substr($0, RSTART, 40); exit }')"
 fi
-if [ -n "$SIGN_ID" ] && codesign --force --deep --sign "$SIGN_ID" "$APP" >/dev/null 2>&1; then
+if [ -n "$SIGN_ID" ] && codesign --force --deep --sign "$SIGN_ID" ${ENTITLEMENTS[@]+"${ENTITLEMENTS[@]}"} "$APP" >/dev/null 2>&1; then
     echo "Signed with identity $SIGN_ID (stable — Accessibility grant will persist)."
 else
-    codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+    codesign --force --deep --sign - ${ENTITLEMENTS[@]+"${ENTITLEMENTS[@]}"} "$APP" >/dev/null 2>&1 || true
     echo "Ad-hoc signed (no code-signing identity found). The Accessibility grant"
     echo "will reset on each rebuild — run ./scripts/setup-signing.sh to get a"
     echo "stable identity."
 fi
 
 echo "Built ./$APP"
-echo "Launch it with:  open $APP     (or double-click it in Finder)"
-echo "To install:      mv $APP /Applications/"
+echo "Launch it with:  open \"$APP\"     (or double-click it in Finder)"
+echo "To install:      mv \"$APP\" /Applications/"

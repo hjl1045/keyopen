@@ -21,15 +21,20 @@ struct AboutView: View {
                 .textSelection(.enabled)
                 .padding(.top, 3)
 
-            status
-                .font(.system(size: 12))
-                .padding(.top, 12)
+            // App Store builds are updated by the App Store.
+            if !LibraryAccess.isSandboxed {
+                status
+                    .font(.system(size: 12))
+                    .padding(.top, 12)
+            }
 
             VStack(spacing: 7) {
-                Button { updates.check() } label: {
-                    Text("Check for Updates").frame(maxWidth: .infinity)
+                if !LibraryAccess.isSandboxed {
+                    Button { updates.check() } label: {
+                        Text("Check for Updates").frame(maxWidth: .infinity)
+                    }
+                    .disabled(updates.state == .checking)
                 }
-                .disabled(updates.state == .checking)
                 Button(action: onFeedback) {
                     Text("Send Feedback…").frame(maxWidth: .infinity)
                 }

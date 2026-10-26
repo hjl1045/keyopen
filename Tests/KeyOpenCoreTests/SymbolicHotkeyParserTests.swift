@@ -43,3 +43,38 @@ final class SymbolicHotkeyParserTests: XCTestCase {
         XCTAssertEqual(collector.collect().count, 1)
     }
 }
+
+/// The sandboxed build reads preference plists from disk instead of asking
+/// `cfprefsd`. Both must decode the same shortcuts, or the App Store build
+/// would recommend combos the direct build knows are taken.
+final class PreferenceStoreTests: XCTestCase {
+    func testFilesMatchUserDefaultsOnThisMac() throws {
+        let library = FileManager.default.homeDirectoryForCurrentUser.appending(path: "Library")
+        let plist = library.appending(path: "Preferences/com.apple.symbolichotkeys.plist")
+        try XCTSkipUnless(FileManager.default.isReadableFile(atPath: plist.path),
+                          "no symbolic hotkeys plist on this machine")
+
+        let fromDefaults = SystemShortcutCollector(store: .userDefaults).collect()
+        let fromFiles = SystemShortcutCollector(store: .files(library: library)).collect()
+        XCTAssertFalse(fromFiles.isEmpty)
+        XCTAssertEqual(Set(fromFiles.map(\.combo)), Set(fromDefaults.map(\.combo)))
+    }
+
+    func testFilesReadFromTheGrantedLibrary() throws {
+        let library = FileManager.default.temporaryDirectory
+            .appending(path: "PreferenceStoreTests-\(UUID().uuidString)/Library")
+        try FileManager.default.createDirectory(at: library.appending(path: "Preferences"),
+                                                withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: library.deletingLastPathComponent()) }
+        let prefs: [String: Any] = ["KeyboardShortcuts_toggle": #"{"carbonKeyCode":40,"carbonModifiers":768}"#]
+        try PropertyListSerialization.data(fromPropertyList: prefs, format: .binary, options: 0)
+            .write(to: library.appending(path: "Preferences/com.example.app.plist"))
+
+        let store = PreferenceStore.files(library: library)
+        XCTAssertEqual(store.home, library.deletingLastPathComponent())
+        let found = GlobalHotkeyCollector(apps: [.init(bundleID: "com.example.app", name: "Example")],
+                                          store: store).collect()
+        XCTAssertEqual(found.map(\.combo.displayString), ["⇧⌘K"])
+        XCTAssertEqual(found.first?.action, "Toggle")
+    }
+}
