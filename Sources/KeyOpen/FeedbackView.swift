@@ -3,7 +3,7 @@ import KeyOpenCore
 import SwiftUI
 
 /// "Send Feedback…": a message, optionally tagged with the version, sent as an
-/// email draft or a GitHub issue — either way the user presses the final Send.
+/// email draft — the user presses the final Send in Mail.
 struct FeedbackView: View {
     let onDone: () -> Void
     @State private var message = ""
@@ -22,20 +22,18 @@ struct FeedbackView: View {
             Toggle("Include version info (\(AppInfo.version) · macOS \(AppInfo.osVersion))",
                    isOn: $includeVersion)
                 .font(.system(size: 11.5))
-            HStack(spacing: 8) {
-                Button {
-                    NSWorkspace.shared.open(Feedback.issueURL(message: message, info: info))
-                    onDone()
-                } label: { Text("Open GitHub Issue").frame(maxWidth: .infinity) }
-                Button {
-                    let diagnostics = AppInfo.diagnostics
-                    Mailer.compose(subject: Feedback.subject(.feedback, info: diagnostics),
-                                   body: Feedback.body(message: message, info: info))
-                    onDone()
-                } label: { Text("Send").frame(maxWidth: .infinity) }
-                .keyboardShortcut(.defaultAction)
-                .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            }
+            // One way to send: email works for everyone. A second "GitHub issue"
+            // button made every user choose, and most App Store users have no
+            // GitHub account. The repo still takes issues; it's linked from the
+            // download page.
+            Button {
+                let diagnostics = AppInfo.diagnostics
+                Mailer.compose(subject: Feedback.subject(.feedback, info: diagnostics),
+                               body: Feedback.body(message: message, info: info))
+                onDone()
+            } label: { Text("Send").frame(maxWidth: .infinity) }
+            .keyboardShortcut(.defaultAction)
+            .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .controlSize(.large)
         }
         .padding(20)
