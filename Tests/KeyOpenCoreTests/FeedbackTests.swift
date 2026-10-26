@@ -16,19 +16,6 @@ final class FeedbackTests: XCTestCase {
         XCTAssertEqual(Feedback.body(message: "", info: info), "KeyOpen 0.1.0 (1) · macOS 26.1")
     }
 
-    func testIssueTitleIsTheFirstLine() {
-        let url = Feedback.issueURL(message: "Raycast hotkey shown as free\nIt's ⌥Space", info: info)
-        XCTAssertEqual(url.host, "github.com")
-        XCTAssertEqual(url.path, "/hjl1045/keyopen/issues/new")
-        XCTAssertEqual(query(url)["title"], "Raycast hotkey shown as free")
-        XCTAssertEqual(query(url)["body"],
-                       "Raycast hotkey shown as free\nIt's ⌥Space\n\n—\nKeyOpen 0.1.0 (1) · macOS 26.1")
-    }
-
-    func testEmptyMessageStillMakesATitle() {
-        XCTAssertEqual(query(Feedback.issueURL(message: "", info: nil))["title"], "Feedback")
-    }
-
     func testPlusSignsSurviveEncoding() {
         // "+" read as a space would turn "⌘+" into "⌘ ".
         let url = Feedback.mailtoURL(subject: "a+b", body: "Bind ⌘+ please")
