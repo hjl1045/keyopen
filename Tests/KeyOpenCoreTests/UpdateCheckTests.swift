@@ -24,53 +24,52 @@ final class AppVersionTests: XCTestCase {
 }
 
 final class UpdateCheckTests: XCTestCase {
-    /// Trimmed from a real `releases/latest` response
-    /// (sindresorhus/KeyboardShortcuts, 2026-10-25): an untitled release
-    /// comes back with `"name": ""` and a tag without a "v".
-    private func payload(tag: String, name: String) -> Data {
-        """
-        {"html_url": "https://github.com/hjl1045/keyopen/releases/tag/\(tag)",
-         "tag_name": "\(tag)", "name": "\(name)", "draft": false, "prerelease": false,
-         "body": "- Improve macOS 27 compatibility\\r\\n"}
-        """.data(using: .utf8)!
+    /// The shape of theautonomes.ai/keyopen/releases.json: newest first.
+    private func feed(_ entries: [(String, String?)]) -> Data {
+        let items = entries.map { version, title in
+            let titleField = title.map { #", "title": "\#($0)""# } ?? ""
+            return #"{"version": "\#(version)", "date": "2026-10-26"\#(titleField), "notes": ["x"], "download": "https://www.theautonomes.ai/downloads/KeyOpen-\#(version).zip"}"#
+        }
+        return Data("[\(items.joined(separator: ","))]".utf8)
     }
 
     private let current = AppVersion("0.1.0")!
 
     func testNewerReleaseIsOffered() {
         let outcome = UpdateCheck.evaluate(statusCode: 200,
-                                           body: payload(tag: "v0.2.0", name: "Adds a Raycast reader"),
+                                           body: feed([("0.2.0", "Adds a Raycast reader"), ("0.1.0", nil)]),
                                            current: current)
         guard case .available(let release) = outcome else { return XCTFail("\(String(describing: outcome))") }
         XCTAssertEqual(release.version, AppVersion("0.2.0"))
-        XCTAssertEqual(release.url.absoluteString, "https://github.com/hjl1045/keyopen/releases/tag/v0.2.0")
+        XCTAssertEqual(release.url, UpdateCheck.releasesPage)
         XCTAssertEqual(release.headline, "KeyOpen 0.2.0 is out — Adds a Raycast reader")
     }
 
     func testSameOrOlderReleaseMeansUpToDate() {
-        XCTAssertEqual(UpdateCheck.evaluate(statusCode: 200, body: payload(tag: "v0.1.0", name: ""),
-                                            current: current), .upToDate)
-        XCTAssertEqual(UpdateCheck.evaluate(statusCode: 200, body: payload(tag: "0.0.9", name: ""),
-                                            current: current), .upToDate)
+        XCTAssertEqual(UpdateCheck.evaluate(statusCode: 200, body: feed([("0.1.0", nil)]), current: current),
+                       .upToDate)
+        XCTAssertEqual(UpdateCheck.evaluate(statusCode: 200, body: feed([("0.0.9", nil)]), current: current),
+                       .upToDate)
     }
 
-    func testNoReleaseYetIsUpToDate() {
-        // What GitHub answers today for hjl1045/keyopen, which has no releases.
-        XCTAssertEqual(UpdateCheck.evaluate(statusCode: 404, body: Data(), current: current), .upToDate)
+    func testHighestVersionWinsWhateverTheOrder() {
+        let release = UpdateCheck.decodeLatest(feed([("0.1.0", nil), ("0.10.0", "Later"), ("0.9.0", nil)]))
+        XCTAssertEqual(release?.version, AppVersion("0.10.0"))
+        XCTAssertEqual(release?.title, "Later")
     }
 
     func testFailuresAreUnknownNotUpToDate() {
-        XCTAssertNil(UpdateCheck.evaluate(statusCode: 403, body: Data(), current: current))
+        // A missing feed is a broken site, not proof the user is current.
+        XCTAssertNil(UpdateCheck.evaluate(statusCode: 404, body: Data(), current: current))
+        XCTAssertNil(UpdateCheck.evaluate(statusCode: 500, body: Data(), current: current))
         XCTAssertNil(UpdateCheck.evaluate(statusCode: 200, body: Data("{}".utf8), current: current))
-        XCTAssertNil(UpdateCheck.evaluate(statusCode: 200, body: payload(tag: "nightly", name: ""),
-                                          current: current))
+        // Vercel answers unknown paths with the SPA's index.html, status 200.
+        XCTAssertNil(UpdateCheck.evaluate(statusCode: 200, body: Data("<!doctype html>".utf8), current: current))
+        XCTAssertNil(UpdateCheck.evaluate(statusCode: 200, body: feed([("nightly", nil)]), current: current))
     }
 
-    func testTitleThatOnlyRepeatsTheVersionIsDropped() {
-        for name in ["", "v0.2.0", "0.2.0", "KeyOpen 0.2.0"] {
-            let release = UpdateCheck.decodeLatest(payload(tag: "v0.2.0", name: name))
-            XCTAssertNil(release?.title, name)
-            XCTAssertEqual(release?.headline, "KeyOpen 0.2.0 is out.", name)
-        }
+    func testUntitledReleaseGetsTheShortHeadline() {
+        XCTAssertEqual(UpdateCheck.decodeLatest(feed([("0.2.0", nil)]))?.headline, "KeyOpen 0.2.0 is out.")
+        XCTAssertEqual(UpdateCheck.decodeLatest(feed([("0.2.0", "  ")]))?.headline, "KeyOpen 0.2.0 is out.")
     }
 }

@@ -45,8 +45,11 @@ struct AboutView: View {
             HStack(spacing: 4) {
                 Link("Release notes", destination: UpdateCheck.releasesPage)
                 Text("·").foregroundStyle(.secondary)
-                Link("GitHub", destination: UpdateCheck.repository)
-                Text("·").foregroundStyle(.secondary)
+                if !LibraryAccess.isSandboxed {
+                    Link("Buy me a coffee ☕", destination: UpdateCheck.tipPage)
+                        .fontWeight(.semibold)
+                    Text("·").foregroundStyle(.secondary)
+                }
                 Link(Feedback.email, destination: URL(string: "mailto:\(Feedback.email)")!)
             }
             .font(.system(size: 11.5))

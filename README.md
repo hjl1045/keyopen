@@ -32,7 +32,11 @@ falls out of the data model needed to answer it.
 
 ## Install
 
-No notarized release yet; build it yourself (~10 seconds):
+**[Download KeyOpen for Mac](https://www.theautonomes.ai/keyopen)**: free, notarized,
+macOS 13+. Unzip it, drag KeyOpen to Applications and open it. Release notes are on
+the same page.
+
+Or build it yourself (~10 seconds):
 
 ```sh
 git clone https://github.com/hjl1045/keyopen.git
@@ -43,7 +47,7 @@ mv KeyOpen.app /Applications/ && open /Applications/KeyOpen.app
 
 A keyboard icon appears in the menu bar — no Dock icon, no terminal to keep open.
 
-**Requirements:** macOS 13+, Xcode or the Swift 5.9+ toolchain to build.
+**Requirements:** macOS 13+. Building needs Xcode or the Swift 5.9+ toolchain.
 
 ## Usage
 
@@ -95,7 +99,8 @@ Every such note is inline rather than a tooltip — hover hints don't surface in
 menu-bar window, so anything hidden behind one is never read.
 
 **The ⋯ menu** beside ↻ holds About (version and update status), Send Feedback,
-Launch at Login and Quit. KeyOpen checks GitHub Releases once a day; when a newer
+Buy Me a Coffee, Launch at Login and Quit. KeyOpen checks its
+[release feed](https://www.theautonomes.ai/keyopen) once a day; when a newer
 version exists, one line at the bottom of the panel says so. Nothing shows otherwise.
 If KeyOpen crashed since its last launch, it offers to email the crash report macOS
 saved. The report opens as a Mail draft for you to read and send yourself. KeyOpen

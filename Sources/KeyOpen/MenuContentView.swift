@@ -145,6 +145,10 @@ struct MenuContentView: View {
                 Button("Check for Updates…") { actions.showAbout() }
             }
             Button("Send Feedback…") { actions.showFeedback() }
+            // The App Store allows tips only through its own in-app purchase.
+            if !LibraryAccess.isSandboxed {
+                Button("Buy Me a Coffee ☕…") { NSWorkspace.shared.open(UpdateCheck.tipPage) }
+            }
             Divider()
             Toggle("Launch at Login", isOn: SwiftUI.Binding(get: { actions.launchAtLogin },
                                                     set: { actions.setLaunchAtLogin($0) }))
