@@ -54,12 +54,10 @@ public struct Release: Equatable {
 /// answer is a link to the download page.
 public enum UpdateCheck {
     public static let repository = URL(string: "https://github.com/hjl1045/keyopen")!
-    /// Download and release notes, rendered from the same feed.
-    public static let releasesPage = URL(string: "https://www.theautonomes.ai/keyopen")!
+    /// KeyOpen's home page: download, release notes (rendered from the feed
+    /// below) and the Buy Me a Coffee button.
+    public static let homePage = URL(string: "https://www.theautonomes.ai/keyopen")!
     public static let feed = URL(string: "https://www.theautonomes.ai/keyopen/releases.json")!
-    /// A redirect on the site to the tip page, so the tip service can change
-    /// without shipping a new build.
-    public static let tipPage = URL(string: "https://www.theautonomes.ai/keyopen/coffee")!
 
     public enum Outcome: Equatable {
         case upToDate
@@ -89,7 +87,7 @@ public enum UpdateCheck {
         let releases = entries.compactMap { entry -> Release? in
             guard let version = AppVersion(entry.version) else { return nil }
             let title = entry.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return Release(version: version, url: releasesPage, title: title.isEmpty ? nil : title)
+            return Release(version: version, url: homePage, title: title.isEmpty ? nil : title)
         }
         return releases.max { $0.version < $1.version }
     }

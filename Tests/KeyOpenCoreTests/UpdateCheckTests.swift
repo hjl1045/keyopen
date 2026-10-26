@@ -41,7 +41,7 @@ final class UpdateCheckTests: XCTestCase {
                                            current: current)
         guard case .available(let release) = outcome else { return XCTFail("\(String(describing: outcome))") }
         XCTAssertEqual(release.version, AppVersion("0.2.0"))
-        XCTAssertEqual(release.url, UpdateCheck.releasesPage)
+        XCTAssertEqual(release.url, UpdateCheck.homePage)
         XCTAssertEqual(release.headline, "KeyOpen 0.2.0 is out — Adds a Raycast reader")
     }
 
