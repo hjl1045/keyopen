@@ -85,7 +85,11 @@ signs with the Developer ID, notarizes, staples, and writes
 
 1. Copy the zip to `public/downloads/`.
 2. Add the release to the **top** of `public/keyopen/releases.json`:
-   `version`, `date`, a `title` saying what it adds, `notes`, and `download`.
+   `version`, `date`, `title`, `notes`, and `download`. Write notes for users of
+   the tool: spell out only changes to finding free shortcuts (a new app's
+   hotkeys read, better suggestions, a clearer panel). Anything around it,
+   like the About window, feedback, tipping, launch at login or update
+   notices, is "Bug fixes and improvements". The `title` follows the same rule.
 3. Merge. Vercel deploys, and `/keyopen` shows the new download and notes.
 
 That same `releases.json` is the app's update feed. The app compares the highest
@@ -98,8 +102,10 @@ curl -sO https://www.theautonomes.ai/downloads/KeyOpen-<version>.zip
 ditto -x -k KeyOpen-<version>.zip out && spctl --assess --type execute -v out/KeyOpen.app
 ```
 
-In-app tips open `https://www.theautonomes.ai/keyopen/coffee`, a redirect in the
-site's `vercel.json`. Change its destination to change the tip page, with no app release.
+"Buy me a coffee" in the app opens the KeyOpen page, whose own button links to
+the tip page through `/keyopen/coffee`, a redirect in the site's `vercel.json`.
+Change the redirect's destination to change the tip service. 0.2.0–0.2.2 open
+that redirect directly, so keep it.
 
 ### 4c. Publish a cask (your own tap is easiest)
 
