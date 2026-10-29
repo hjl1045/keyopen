@@ -69,12 +69,17 @@ needs a build number (`CFBundleVersion`) that the store hasn't seen before.
 | Subtitle (30) | Find free keyboard shortcuts |
 | Category | Productivity (secondary: Utilities) |
 | Price | Free |
-| Support URL | https://www.theautonomes.ai/keyopen |
-| Marketing URL | https://www.theautonomes.ai/keyopen |
+| Support URL | https://www.theautonomes.ai/keyopen/support |
+| Marketing URL | (empty) |
 | Privacy Policy URL | https://www.theautonomes.ai/keyopen/privacy |
 | Age rating | 4+ (no objectionable content in any category) |
 | App Privacy | Data Not Collected |
 | Copyright | 2026 The Autonomes |
+
+The listing points only to /keyopen/support and /keyopen/privacy, never to /keyopen:
+that page has the Buy Me a Coffee button and the direct download, and a listing may
+not lead to other ways to pay or to get the app. For the same reason the App Store
+edition itself opens no outside links.
 
 **Promotional text** (170, can change without a review):
 
