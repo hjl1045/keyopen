@@ -18,8 +18,8 @@ Tracked in THE-280.
         App Store") and download it. Xcode → Settings → Apple Accounts → the team →
         Download Manual Profiles puts it in
         `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`.
-- [ ] **New app** in App Store Connect: platform macOS, name KeyOpen, bundle ID
-      `com.theautonomes.keyopen`, SKU `keyopen-mac`.
+- [x] **New app** in App Store Connect: platform macOS, name KeyOpen, bundle ID
+      `com.theautonomes.keyopen`, SKU `keyopen-mac`. Apple ID `6828271124`.
 - [ ] **In-app purchases:** three consumables, once the tip jar mockup is approved.
       Proposed: `com.theautonomes.keyopen.tip.small` / `.medium` / `.large` at
       $0.99 / $2.99 / $4.99.
