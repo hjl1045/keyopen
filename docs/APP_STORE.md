@@ -20,9 +20,17 @@ Tracked in THE-280.
         `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`.
 - [x] **New app** in App Store Connect: platform macOS, name KeyOpen, bundle ID
       `com.theautonomes.keyopen`, SKU `keyopen-mac`. Apple ID `6828271124`.
-- [ ] **In-app purchases:** three consumables, once the tip jar mockup is approved.
-      Proposed: `com.theautonomes.keyopen.tip.small` / `.medium` / `.large` at
-      $0.99 / $2.99 / $4.99.
+- [ ] **In-app purchases:** three consumables. The names are sizes of thanks, so no
+      price can contradict them (Hansee's pick, 2026-10-28):
+
+      | Product ID | Reference / display name | US price |
+      |---|---|---|
+      | `com.theautonomes.keyopen.tip.thanks` | Thanks | $0.99 |
+      | `com.theautonomes.keyopen.tip.bigthanks` | Big thanks | $4.99 |
+      | `com.theautonomes.keyopen.tip.hugethanks` | Huge thanks | $9.99 |
+
+      The ids must match `TipCatalog` in the code. The first in-app purchases are
+      submitted together with the first build.
 
 ## 2. Build and upload
 

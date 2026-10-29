@@ -8,6 +8,8 @@ import SwiftUI
 final class AppActions: ObservableObject {
     let updates = UpdateChecker()
     let library = LibraryAccess()
+    /// Only the App Store edition takes tips in the app.
+    let tipJar = TipJar()
     @Published private(set) var launchAtLogin = SMAppService.mainApp.status == .enabled
 
     /// Hides the hotkey panel before a window opens: it floats, and would sit
@@ -19,8 +21,20 @@ final class AppActions: ObservableObject {
     func showAbout() {
         // The App Store updates its own apps; a second mechanism isn't allowed there.
         if !LibraryAccess.isSandboxed { updates.check() }
-        present("about", AboutView(onFeedback: { [weak self] in self?.showFeedback() })
+        present("about", AboutView(onFeedback: { [weak self] in self?.showFeedback() },
+                                   onCoffee: { [weak self] in self?.buyMeACoffee() })
             .environmentObject(updates))
+    }
+
+    /// "Buy me a coffee": KeyOpen's page in the download edition, where its
+    /// own button links to the tip page; the in-app tip jar in the App Store
+    /// edition, which may take money only through in-app purchase.
+    func buyMeACoffee() {
+        if LibraryAccess.isSandboxed {
+            present("tips", TipJarView(jar: tipJar))
+        } else {
+            NSWorkspace.shared.open(UpdateCheck.homePage)
+        }
     }
 
     func showFeedback() {
