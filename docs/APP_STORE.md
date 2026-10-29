@@ -99,7 +99,12 @@ needs a build number (`CFBundleVersion`) that the store hasn't seen before.
 
 **Keywords** (100):
 
-> shortcut,hotkey,keyboard,conflict,menu bar,keybinding,free,productivity,Alfred,Keyboard Maestro
+> hotkey,conflict,keybinding,key combination
+
+Only what a person who needs KeyOpen would search for, and that isn't already
+in the name or subtitle. Apple indexes those too, so "keyboard", "shortcuts" and
+"free" are already covered. No other apps' names and no generic words like
+"productivity": they add noise, not matches (Hansee, 2026-10-28).
 
 Keep this copy away from the direct download. Pointing App Store customers to
 another place to get the app risks a rejection, so the listing states the
