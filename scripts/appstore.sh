@@ -22,7 +22,7 @@ DRY_RUN=0
 [ "${1:-}" = "--dry-run" ] && DRY_RUN=1
 
 TEAM_ID="V8PU3S5GHV"
-BUNDLE_ID="${APPSTORE_BUNDLE_ID:-ai.theautonomes.KeyOpen}"
+BUNDLE_ID="${APPSTORE_BUNDLE_ID:-com.theautonomes.keyopen}"
 APP_ID="${APPSTORE_APP_IDENTITY:-Apple Distribution: The Autonomes Technologies LLC ($TEAM_ID)}"
 PKG_ID="${APPSTORE_INSTALLER_IDENTITY:-3rd Party Mac Developer Installer: The Autonomes Technologies LLC ($TEAM_ID)}"
 PROFILE="${APPSTORE_PROFILE:-}"

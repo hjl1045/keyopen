@@ -169,7 +169,7 @@ three things:
 No temporary-exception entitlements: App Review rejects them.
 
 `./scripts/appstore.sh` turns this into the store build: bundle ID
-`ai.theautonomes.KeyOpen`, universal binary, distribution signing, `.pkg`. The account
+`com.theautonomes.keyopen`, universal binary, distribution signing, `.pkg`. The account
 setup, listing copy, screenshots and review notes are in [APP_STORE.md](APP_STORE.md).
 
 
