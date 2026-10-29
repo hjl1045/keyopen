@@ -80,13 +80,13 @@ needs a build number (`CFBundleVersion`) that the store hasn't seen before.
 
 > Setting up a new shortcut? KeyOpen shows which combos are already taken on your Mac, and ranks the ones still free.
 
-**Description** (opens with a statement, not a question; Hansee, 2026-10-28):
+**Description** (opens with a statement, not a question, and names no other apps; Hansee, 2026-10-28):
 
 > KeyOpen shows which keyboard shortcuts are already taken on your Mac, and ranks the comfortable combinations still free. Open it in one click from the menu bar, or from any app with ⌃⌥⌘K, right when a shortcut field is waiting.
 >
 > WHAT IT CHECKS
 > • macOS's own keyboard shortcuts
-> • Global hotkeys of other running apps, including apps built with the KeyboardShortcuts library, Alfred, Keyboard Maestro and Wispr Flow
+> • Global hotkeys of the other apps you have running
 >
 > WHAT YOU SEE
 > • Free combinations first, best first
