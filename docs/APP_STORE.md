@@ -42,7 +42,7 @@ price Free in 175 regions, privacy policy URL, and the "Data Not Collected" answ
 
 Left before **Submit for Review**:
 1. **Publish** the App Privacy answers. It's a legal confirmation, so Hansee clicks it.
-2. **App Review contact** (name, phone, email) on the version page. Personal details, Hansee's to enter.
+2. ~~App Review contact~~: done (Hansee, 2026-10-28). Note: App Store Connect won't save the App Review section, notes included, without it.
 3. **Screenshots** (§4).
 4. **Upload a build** (§2), then in TestFlight buy each tip with a sandbox account and take the
    in-app purchase review screenshots.
