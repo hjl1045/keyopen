@@ -47,9 +47,16 @@ struct AboutView: View {
             // address was what got truncated. The coffee link opens KeyOpen's
             // page (download edition) or the tip jar (App Store edition), never
             // straight to a payment page.
+            //
+            // The App Store edition links nowhere outside the app: KeyOpen's
+            // page offers a Buy Me a Coffee button and the download, and an App
+            // Store app may not point to other payment or another way to get
+            // it. The App Store shows its own release notes.
             HStack(spacing: 4) {
-                Link("Release notes", destination: UpdateCheck.homePage)
-                Text("·").foregroundStyle(.secondary)
+                if !LibraryAccess.isSandboxed {
+                    Link("Release notes", destination: UpdateCheck.homePage)
+                    Text("·").foregroundStyle(.secondary)
+                }
                 Button("Buy me a coffee ☕", action: onCoffee)
                     .buttonStyle(.link)
                     .fontWeight(.semibold)
