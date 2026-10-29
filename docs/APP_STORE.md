@@ -80,11 +80,9 @@ needs a build number (`CFBundleVersion`) that the store hasn't seen before.
 
 > Setting up a new shortcut? KeyOpen shows which combos are already taken on your Mac, and ranks the ones still free.
 
-**Description:**
+**Description** (opens with a statement, not a question; Hansee, 2026-10-28):
 
-> You're in an app's settings with a shortcut field waiting. Which combination is safe to use?
->
-> KeyOpen answers in one click from the menu bar, or from anywhere with ⌃⌥⌘K. It lists the keyboard shortcuts already taken and ranks the comfortable combinations still free.
+> KeyOpen shows which keyboard shortcuts are already taken on your Mac, and ranks the comfortable combinations still free. Open it in one click from the menu bar, or from any app with ⌃⌥⌘K, right when a shortcut field is waiting.
 >
 > WHAT IT CHECKS
 > • macOS's own keyboard shortcuts
