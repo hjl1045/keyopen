@@ -93,14 +93,14 @@ edition itself opens no outside links.
 > • macOS's own keyboard shortcuts
 > • Global hotkeys of the other apps you have running
 >
+> It doesn't include the menu commands of the app you're using.
+>
 > WHAT YOU SEE
 > • Free combinations first, best first
 > • What's taken, grouped by who owns it
 > • Conflicts, with which shortcut wins
 >
 > KeyOpen only reads; it never changes a shortcut or a setting. It collects no data: no account, no analytics, no tracking.
->
-> Good to know: macOS has no way to list every hotkey apps register, so "free" means free among what KeyOpen can see. This edition doesn't read the menu commands of the app you're using, because the App Store sandbox doesn't allow it.
 
 **Keywords** (100):
 
@@ -128,6 +128,8 @@ limitation without naming the alternative.
 > KeyOpen is a read-only utility. It shows which keyboard shortcuts are already taken on the Mac, so a user setting up a new shortcut can pick one that's free.
 >
 > Why it asks for the Library folder: macOS keeps its own keyboard shortcuts and other apps' hotkey settings in ~/Library (Preferences and Application Support). Inside the App Sandbox these aren't visible, so on first launch KeyOpen asks the user to choose their Library folder in a standard open panel (com.apple.security.files.user-selected.read-only). The choice is stored as an app-scoped security bookmark, so it's asked only once. KeyOpen only reads these files. It never writes to them and never sends them anywhere. It uses no temporary-exception entitlements and doesn't request Accessibility.
+>
+> Why it doesn't list the current app's menu commands: reading another app's menus needs the Accessibility API, which a sandboxed app can't use for this. The description tells users so.
 >
 > How to test:
 > 1. Launch KeyOpen. A keyboard icon appears in the menu bar (no Dock icon).
