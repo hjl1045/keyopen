@@ -6,6 +6,7 @@ import SwiftUI
 struct AboutView: View {
     @EnvironmentObject private var updates: UpdateChecker
     let onFeedback: () -> Void
+    let onCoffee: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -44,15 +45,14 @@ struct AboutView: View {
 
             // No email address here: Send Feedback already writes to it, and the
             // address was what got truncated. The coffee link opens KeyOpen's
-            // page, where the tip button sits beside the download, rather than
-            // jumping a stranger straight to a payment page.
+            // page (download edition) or the tip jar (App Store edition), never
+            // straight to a payment page.
             HStack(spacing: 4) {
                 Link("Release notes", destination: UpdateCheck.homePage)
-                if !LibraryAccess.isSandboxed {
-                    Text("·").foregroundStyle(.secondary)
-                    Link("Buy me a coffee ☕", destination: UpdateCheck.homePage)
-                        .fontWeight(.semibold)
-                }
+                Text("·").foregroundStyle(.secondary)
+                Button("Buy me a coffee ☕", action: onCoffee)
+                    .buttonStyle(.link)
+                    .fontWeight(.semibold)
             }
             .font(.system(size: 11.5))
             .tint(Palette.system)

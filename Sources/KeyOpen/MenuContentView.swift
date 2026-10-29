@@ -145,11 +145,7 @@ struct MenuContentView: View {
                 Button("Check for Updates…") { actions.showAbout() }
             }
             Button("Send Feedback…") { actions.showFeedback() }
-            // The App Store allows tips only through its own in-app purchase.
-            if !LibraryAccess.isSandboxed {
-                // KeyOpen's page, whose coffee button sits beside the download.
-                Button("Buy Me a Coffee ☕…") { NSWorkspace.shared.open(UpdateCheck.homePage) }
-            }
+            Button("Buy Me a Coffee ☕…") { actions.buyMeACoffee() }
             Divider()
             Toggle("Launch at Login", isOn: SwiftUI.Binding(get: { actions.launchAtLogin },
                                                     set: { actions.setLaunchAtLogin($0) }))

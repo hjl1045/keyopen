@@ -16,7 +16,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let controller = PanelController(tracker: tracker, actions: actions)
         self.panelController = controller
         actions.dismissPanel = { [weak controller] in controller?.hide() }
-        if !LibraryAccess.isSandboxed { actions.updates.start() }
+        if LibraryAccess.isSandboxed {
+            actions.tipJar.listenForTransactions()
+        } else {
+            actions.updates.start()
+        }
         actions.offerCrashReportIfAny()
 
         // Global hotkey: ⌃⌥⌘K. Includes ⌘+⌃, so it avoids macOS Sequoia's
