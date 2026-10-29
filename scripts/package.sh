@@ -39,7 +39,35 @@ if command -v iconutil >/dev/null 2>&1 && command -v sips >/dev/null 2>&1; then
         gen 256  icon_256x256.png;  gen 512  icon_256x256@2x.png
         gen 512  icon_512x512.png;  gen 1024 icon_512x512@2x.png
         iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
-        echo "Icon embedded."
+
+        # The Mac App Store also wants an asset catalog (Assets.car): without
+        # one, processing rejects the build with ITMS-90546 "Missing asset
+        # catalog", even though altool's pre-upload validation passes. actool
+        # compiles the same PNGs into Assets.car (and rewrites AppIcon.icns).
+        if xcrun --find actool >/dev/null 2>&1; then
+            SET="$TMP/Assets.xcassets/AppIcon.appiconset"; mkdir -p "$SET"
+            cp "$ICONSET"/*.png "$SET/"
+            python3 - "$SET" <<'PY'
+import json, sys
+images = []
+for size in (16, 32, 128, 256, 512):
+    for scale in (1, 2):
+        suffix = "" if scale == 1 else "@2x"
+        images.append({"idiom": "mac", "size": f"{size}x{size}", "scale": f"{scale}x",
+                       "filename": f"icon_{size}x{size}{suffix}.png"})
+json.dump({"images": images, "info": {"version": 1, "author": "xcode"}},
+          open(f"{sys.argv[1]}/Contents.json", "w"), indent=2)
+json.dump({"info": {"version": 1, "author": "xcode"}},
+          open(f"{sys.argv[1]}/../Contents.json", "w"), indent=2)
+PY
+            xcrun actool --compile "$APP/Contents/Resources" --platform macosx \
+                --minimum-deployment-target 13.0 --app-icon AppIcon \
+                --output-partial-info-plist "$TMP/actool-info.plist" \
+                "$TMP/Assets.xcassets" >/dev/null
+            echo "Icon embedded (with asset catalog)."
+        else
+            echo "Icon embedded (no actool: no asset catalog; the App Store will reject this build)."
+        fi
     else
         echo "Icon generation skipped (render failed)."
     fi
@@ -58,7 +86,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleIconName</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>0.2.3</string>
-    <key>CFBundleVersion</key><string>5</string>
+    <key>CFBundleVersion</key><string>6</string>
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSUIElement</key><true/>
     <key>NSPrincipalClass</key><string>NSApplication</string>
