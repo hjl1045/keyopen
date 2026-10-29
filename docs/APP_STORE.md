@@ -7,18 +7,21 @@ Tracked in THE-280.
 
 ## 1. Account setup (Hansee, in App Store Connect)
 
-- [ ] **Agreements, Tax and Banking:** accept the **Paid Apps agreement** and fill in tax
+- [x] **Agreements, Tax and Banking:** accept the **Paid Apps agreement** and fill in tax
       and bank details. KeyOpen is free, but the tip jar is an in-app purchase.
 - [ ] **Certificates, Identifiers & Profiles** (developer.apple.com):
-  - [ ] Register the App ID `ai.theautonomes.KeyOpen` (explicit, macOS). In-App
+  - [x] Register the App ID `com.theautonomes.keyopen` (explicit, macOS). In-App
         Purchase is on by default.
-  - [ ] Create an **Apple Distribution** certificate and a **Mac Installer
+  - [x] Create an **Apple Distribution** certificate and a **Mac Installer
         Distribution** certificate, and install both in the keychain on this Mac.
-  - [ ] Create a **Mac App Store** provisioning profile for that App ID and download it.
+  - [x] Create a **Mac App Store** provisioning profile for that App ID ("KeyOpen Mac
+        App Store") and download it. Xcode → Settings → Apple Accounts → the team →
+        Download Manual Profiles puts it in
+        `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`.
 - [ ] **New app** in App Store Connect: platform macOS, name KeyOpen, bundle ID
-      `ai.theautonomes.KeyOpen`, SKU `keyopen-mac`.
+      `com.theautonomes.keyopen`, SKU `keyopen-mac`.
 - [ ] **In-app purchases:** three consumables, once the tip jar mockup is approved.
-      Proposed: `ai.theautonomes.KeyOpen.tip.small` / `.medium` / `.large` at
+      Proposed: `com.theautonomes.keyopen.tip.small` / `.medium` / `.large` at
       $0.99 / $2.99 / $4.99.
 
 ## 2. Build and upload
