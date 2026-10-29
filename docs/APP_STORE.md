@@ -20,7 +20,7 @@ Tracked in THE-280.
         `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`.
 - [x] **New app** in App Store Connect: platform macOS, name KeyOpen, bundle ID
       `com.theautonomes.keyopen`, SKU `keyopen-mac`. Apple ID `6828271124`.
-- [ ] **In-app purchases:** three consumables. The names are sizes of thanks, so no
+- [x] **In-app purchases:** three consumables, created 2026-10-28 (all 175 regions, English text). Each still needs an App Review screenshot of the tip window, which can only be taken from a TestFlight build. The names are sizes of thanks, so no
       price can contradict them (Hansee's pick, 2026-10-28):
 
       | Product ID | Reference / display name | US price |
@@ -31,6 +31,22 @@ Tracked in THE-280.
 
       The ids must match `TipCatalog` in the code. The first in-app purchases are
       submitted together with the first build.
+
+### Status (2026-10-28)
+
+Entered in App Store Connect: version **0.2.3** (it must equal the build's
+`CFBundleShortVersionString`), promotional text, description, keywords, support and
+marketing URLs, copyright, App Review notes, manual release, subtitle, categories
+(Productivity / Utilities), content rights (no third-party content), age rating 4+,
+price Free in 175 regions, privacy policy URL, and the "Data Not Collected" answers.
+
+Left before **Submit for Review**:
+1. **Publish** the App Privacy answers. It's a legal confirmation, so Hansee clicks it.
+2. **App Review contact** (name, phone, email) on the version page. Personal details, Hansee's to enter.
+3. **Screenshots** (§4).
+4. **Upload a build** (§2), then in TestFlight buy each tip with a sandbox account and take the
+   in-app purchase review screenshots.
+5. Attach the build and the three in-app purchases to version 0.2.3, then submit.
 
 ## 2. Build and upload
 
