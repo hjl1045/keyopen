@@ -93,7 +93,7 @@ final class ScanEngineTests: XCTestCase {
         XCTAssertEqual(result.conflicts.count, 1)
     }
 
-    /// Wispr Flow's own ⇧⌘U was listed under "Global hotkeys (other apps)" while
+    /// Wispr Flow's own ⇧⌘U was listed under "Other apps" while
     /// Wispr Flow *was* the app being inspected (THE-152).
     func testTheInspectedAppsOwnGlobalHotkeysAreNotFiledUnderOtherApps() {
         let wispr = Owner(bundleID: "com.electron.wispr-flow", name: "Wispr Flow")

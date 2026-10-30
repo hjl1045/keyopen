@@ -76,4 +76,19 @@ final class PanelLayoutTests: XCTestCase {
                 - PanelLayout.listHeight(sections: [clean], recommendations: 0),
             3 * PanelLayout.conflictNoteHeight)
     }
+
+    func testTheMenusNoteMakesRoomForItself() {
+        let bare = PanelLayout.SectionMetrics(rows: 0, expanded: true, conflicts: 0)
+        let noted = PanelLayout.SectionMetrics(rows: 0, expanded: true, conflicts: 0, hasNote: true)
+        XCTAssertEqual(PanelLayout.listHeight(sections: [noted], recommendations: 8)
+                       - PanelLayout.listHeight(sections: [bare], recommendations: 8),
+                       PanelLayout.menusNoteHeight)
+    }
+
+    func testMenusNoteNamesTheApp() {
+        XCTAssertEqual(MenusNote.text(appName: "Google Chrome"),
+                       "Check Google Chrome’s menus for its existing shortcuts.")
+        XCTAssertEqual(MenusNote.text(appName: "Messages"),
+                       "Check Messages’ menus for its existing shortcuts.")
+    }
 }

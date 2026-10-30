@@ -251,22 +251,24 @@ struct MenuContentView: View {
     private typealias Tint = Palette
 
     /// The sections as drawn, in order — shared by the renderer and the height
-    /// calculation so the two can't disagree about what's on screen.
-    /// `namingOwner` is true where rows mix apps and must name theirs.
+    /// calculation so the two can't disagree about what's on screen. The app
+    /// you're in comes first: it's what you're choosing a shortcut for.
+    /// `namingOwner` is true where rows mix apps and must name theirs. `note`
+    /// stands in for menus the App Store edition can't read.
     private func sections(_ result: ScanResult)
-        -> [(title: String, bindings: [KeyOpenCore.Binding], namingOwner: Bool, tint: Color)] {
-        var out: [(String, [KeyOpenCore.Binding], Bool, Color)] = [
-            ("System", result.systemBindings, false, Tint.system)
-        ]
-        if !result.appBindings.isEmpty {
+        -> [(title: String, bindings: [KeyOpenCore.Binding], namingOwner: Bool, tint: Color, note: String?)] {
+        var out: [(String, [KeyOpenCore.Binding], Bool, Color, String?)] = []
+        let note = LibraryAccess.isSandboxed ? viewModel.appName.map(MenusNote.text(appName:)) : nil
+        if !result.appBindings.isEmpty || note != nil {
             // Includes this app's own global hotkeys, so the rows stay
             // unqualified — the section header already names the app.
-            out.append((viewModel.appName ?? "App", result.appBindings, false, Tint.thisApp))
+            out.append((viewModel.appName ?? "App", result.appBindings, false, Tint.thisApp, note))
         }
+        out.append(("macOS", result.systemBindings, false, Tint.system, nil))
         if !result.globalBindings.isEmpty {
-            out.append(("Global hotkeys (other apps)", result.globalBindings, true, Tint.otherApps))
+            out.append(("Other apps", result.globalBindings, true, Tint.otherApps, nil))
         }
-        return out.map { (title: $0.0, bindings: $0.1, namingOwner: $0.2, tint: $0.3) }
+        return out.map { (title: $0.0, bindings: $0.1, namingOwner: $0.2, tint: $0.3, note: $0.4) }
     }
 
     private func inUseSection(_ result: ScanResult) -> some View {
@@ -276,7 +278,7 @@ struct MenuContentView: View {
             Text("In use").font(.headline)
             ForEach(sections(result), id: \.title) { section in
                 bindingRows(section.title, section.bindings, conflicts: conflicts,
-                            namingOwner: section.namingOwner, tint: section.tint)
+                            namingOwner: section.namingOwner, tint: section.tint, note: section.note)
             }
         }
     }
@@ -287,7 +289,8 @@ struct MenuContentView: View {
             PanelLayout.SectionMetrics(
                 rows: section.bindings.count,
                 expanded: isExpanded(section.title, count: section.bindings.count),
-                conflicts: section.bindings.filter { conflictCombos.contains($0.combo) }.count
+                conflicts: section.bindings.filter { conflictCombos.contains($0.combo) }.count,
+                hasNote: section.note != nil
             )
         }
         return PanelLayout.listHeight(
@@ -300,15 +303,25 @@ struct MenuContentView: View {
                              _ bindings: [KeyOpenCore.Binding],
                              conflicts: [KeyCombo: [KeyOpenCore.Binding]],
                              namingOwner: Bool = false,
-                             tint: Color = .secondary) -> some View {
+                             tint: Color = .secondary,
+                             note: String? = nil) -> some View {
         let rows = bindings.enumerated().map { Row(id: $0.offset, binding: $0.element) }
         let flagged = bindings.filter { binding in
             (conflicts[binding.combo] ?? []).contains { $0 != binding }
         }.count
         let open = isExpanded(title, count: bindings.count)
         return VStack(alignment: .leading, spacing: 3) {
-            sectionHeader(title, count: bindings.count, conflicts: flagged,
-                          isOpen: open, tint: tint)
+            // A section that is only the note shows no "0": the app has
+            // shortcuts, we just can't count them.
+            sectionHeader(title, count: bindings.isEmpty && note != nil ? nil : bindings.count,
+                          conflicts: flagged, isOpen: open, tint: tint)
+            if open, let note {
+                Text(note)
+                    .font(.system(size: 11.5))
+                    .foregroundStyle(Palette.warning)
+                    .padding(.leading, 12)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if open {
                 // A hairline rail rather than a filled card — the color marks
                 // the group without boxing it in or eating vertical space.
@@ -354,7 +367,7 @@ struct MenuContentView: View {
     /// A tappable section header. Collapsed sections still report their size and
     /// any conflicts inside them — folding a section away must never fold away
     /// the fact that something in it needs attention.
-    private func sectionHeader(_ title: String, count: Int, conflicts: Int,
+    private func sectionHeader(_ title: String, count: Int?, conflicts: Int,
                                isOpen: Bool, tint: Color) -> some View {
         Button {
             overrides[title] = !isOpen
@@ -364,9 +377,11 @@ struct MenuContentView: View {
                     .font(.system(size: 8, weight: .bold))
                 Text(title.uppercased())
                     .font(.system(size: 10, weight: .semibold))
-                Text("\(count)")
-                    .font(.system(size: 10))
-                    .opacity(0.6)
+                if let count {
+                    Text("\(count)")
+                        .font(.system(size: 10))
+                        .opacity(0.6)
+                }
                 if conflicts > 0 {
                     Text("⚠︎\(conflicts)")
                         .font(.system(size: 10, weight: .semibold))

@@ -12,6 +12,8 @@ public enum PanelLayout {
     public static let sectionHeaderHeight: CGFloat = 20
     /// A conflict adds an explanatory line under its row.
     public static let conflictNoteHeight: CGFloat = 26
+    /// The App Store edition's two-line "check its menus" note in the app section.
+    public static let menusNoteHeight: CGFloat = 32
     /// "In use" / "Open slots" titles.
     public static let titleHeight: CGFloat = 24
 
@@ -24,11 +26,14 @@ public enum PanelLayout {
         public let rows: Int
         public let expanded: Bool
         public let conflicts: Int
+        /// Carries the "check its menus" note under its header.
+        public let hasNote: Bool
 
-        public init(rows: Int, expanded: Bool, conflicts: Int) {
+        public init(rows: Int, expanded: Bool, conflicts: Int, hasNote: Bool = false) {
             self.rows = rows
             self.expanded = expanded
             self.conflicts = conflicts
+            self.hasNote = hasNote
         }
     }
 
@@ -45,9 +50,20 @@ public enum PanelLayout {
             guard section.expanded else { continue } // a folded section costs only its header
             height += CGFloat(section.rows) * rowHeight
             height += CGFloat(section.conflicts) * conflictNoteHeight
+            if section.hasNote { height += menusNoteHeight }
         }
         height += titleHeight + CGFloat(recommendations) * rowHeight // "Open slots"
         height += CGFloat(caveatedRecommendations) * conflictNoteHeight
         return min(max(height, minListHeight), maxListHeight)
+    }
+}
+
+/// The line the App Store edition shows in the front app's section. It can't
+/// read that app's menus, so instead of leaving the section out (which read as
+/// "this app has no shortcuts"), it says where to look. Hansee's wording.
+public enum MenusNote {
+    public static func text(appName: String) -> String {
+        let possessive = appName.hasSuffix("s") ? "\(appName)’" : "\(appName)’s"
+        return "Check \(possessive) menus for its existing shortcuts."
     }
 }
