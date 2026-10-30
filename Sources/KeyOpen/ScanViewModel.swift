@@ -12,6 +12,8 @@ final class ScanViewModel: ObservableObject {
     /// When the displayed result was produced. A rescan of an unchanged app
     /// looks identical, so this is what tells you the refresh actually ran.
     @Published var lastScanned: Date?
+    /// The app the panel shows, so switching to another one can trigger a rescan.
+    private(set) var shownPID: pid_t?
 
     /// Identifies the newest scan, so a slow earlier one can't overwrite it.
     /// Clicks are never dropped while a scan is in flight — that would look
@@ -30,6 +32,7 @@ final class ScanViewModel: ObservableObject {
         let granted = AXIsProcessTrusted() && !LibraryAccess.isSandboxed
         accessibilityGranted = granted
         appName = target?.localizedName
+        shownPID = target?.processIdentifier
         let pid = target?.processIdentifier
         let bundleID = target?.bundleIdentifier
         let runningApps = collectRunningApps()

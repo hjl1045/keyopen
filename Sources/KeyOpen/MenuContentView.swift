@@ -23,6 +23,9 @@ struct MenuContentView: View {
     /// see `isExpanded(_:count:)`.
     @State private var overrides: [String: Bool] = [:]
 
+    /// The window this view is shown in, so it can tell whether it's on screen.
+    @State private var host = HostWindow()
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
@@ -91,6 +94,26 @@ struct MenuContentView: View {
         .padding(16)
         .frame(width: 340)
         .onAppear { rescan() }
+        .background(WindowReader { host.window = $0 })
+        // Follow the app you switch to while the panel is open: the hotkey
+        // panel floats over other apps and kept showing the one it opened over.
+        // The publisher fires before the property changes, so scan its value.
+        .onReceive(tracker.$lastActiveApp) { app in
+            if FollowFront.shouldRescan(panelVisible: host.window?.isVisible == true,
+                                        front: app?.processIdentifier, shown: viewModel.shownPID) {
+                rescan(app)
+            }
+        }
+        // Reopening doesn't always run onAppear, so catch up when shown again.
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didChangeOcclusionStateNotification)) { note in
+            guard let window = host.window, note.object as? NSWindow === window,
+                  window.occlusionState.contains(.visible) else { return }
+            if FollowFront.shouldRescan(panelVisible: true,
+                                        front: tracker.lastActiveApp?.processIdentifier,
+                                        shown: viewModel.shownPID) {
+                rescan()
+            }
+        }
         // The moment access is granted, show what it unlocked.
         .onChange(of: libraryAccess.library) { _ in rescan() }
         // While access is missing, re-check so the banner clears itself the
@@ -176,8 +199,8 @@ struct MenuContentView: View {
         return formatter
     }()
 
-    private func rescan() {
-        viewModel.scan(target: tracker.lastActiveApp, store: libraryAccess.store)
+    private func rescan(_ target: NSRunningApplication? = nil) {
+        viewModel.scan(target: target ?? tracker.lastActiveApp, store: libraryAccess.store)
     }
 
     private func shownRecommendations(_ result: ScanResult) -> [Recommendation] {
@@ -397,4 +420,23 @@ struct MenuContentView: View {
             }
         }
     }
+}
+
+/// Holds the view's window without owning it.
+private final class HostWindow {
+    weak var window: NSWindow?
+}
+
+/// Reports the window a SwiftUI view ends up in. The window is only known
+/// once the view is in the hierarchy, hence the hop to the next run loop.
+private struct WindowReader: NSViewRepresentable {
+    let onWindow: (NSWindow?) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { onWindow(view.window) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
