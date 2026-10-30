@@ -1,10 +1,11 @@
 import Foundation
 
 public enum Modifier: String, Hashable, CaseIterable, Sendable {
-    case control, option, shift, command
+    case function, control, option, shift, command
 
     public var glyph: String {
         switch self {
+        case .function: return "🌐"
         case .control: return "⌃"
         case .option:  return "⌥"
         case .shift:   return "⇧"
@@ -12,9 +13,10 @@ public enum Modifier: String, Hashable, CaseIterable, Sendable {
         }
     }
 
-    /// Canonical macOS display order: Control, Option, Shift, Command.
+    /// Canonical macOS display order: Globe (fn), Control, Option, Shift, Command.
     var order: Int {
         switch self {
+        case .function: return -1
         case .control: return 0
         case .option:  return 1
         case .shift:   return 2

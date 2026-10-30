@@ -34,7 +34,26 @@ final class ScanEngineTests: XCTestCase {
         ])
         let result = ScanEngine.run(system: system, app: nil)
         XCTAssertEqual(result.appBindings.count, 0)
-        XCTAssertEqual(result.systemBindings.count, 1)
+        XCTAssertEqual(result.systemBindings.count, 1 + ScanEngine.appleMenu.count)
+    }
+
+    func testWithoutMenusTheAppleMenuShortcutsAreStillTaken() {
+        // The sandboxed edition can't read the menu bar, and offered ⇧⌘Q (Log Out) as free.
+        let result = ScanEngine.run(system: FakeCollector(bindings: []), app: nil)
+        let free = Set(result.recommendations.map(\.combo.displayString))
+        XCTAssertFalse(free.contains("⇧⌘Q"))
+        XCTAssertFalse(free.contains("⌃⌘Q"))
+        XCTAssertTrue(result.systemBindings.contains { $0.action == "Log Out" })
+    }
+
+    func testWithMenusTheAppleMenuComesFromTheMenuBar() {
+        // Listing it twice would flag Log Out as conflicting with itself.
+        let app = FakeCollector(bindings: [
+            Binding(combo: KeyCombo(modifiers: [.shift, .command], key: "Q"), action: "Log Out Hansee…", source: .appMenu)
+        ])
+        let result = ScanEngine.run(system: FakeCollector(bindings: []), app: app)
+        XCTAssertTrue(result.systemBindings.isEmpty)
+        XCTAssertTrue(result.conflicts.isEmpty)
     }
 
     /// Wispr Flow lists ⌘W twice — "Close window" and "Close Window" — which
