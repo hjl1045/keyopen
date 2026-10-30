@@ -153,7 +153,6 @@ struct MenuContentView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
-            .noFocusRing()
             .help("Rescan \(viewModel.appName ?? "the frontmost app")")
 
             moreMenu
@@ -456,13 +455,4 @@ private struct WindowReader: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-private extension View {
-    /// ↻ is the panel's first control, so with Keyboard navigation turned on,
-    /// macOS drew a blue focus ring around it every time the panel opened.
-    /// Tab still reaches it; only the ring is hidden.
-    @ViewBuilder func noFocusRing() -> some View {
-        if #available(macOS 14.0, *) { focusEffectDisabled() } else { self }
-    }
 }

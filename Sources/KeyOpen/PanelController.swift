@@ -48,6 +48,11 @@ final class PanelController {
         positionOnActiveScreen(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        // With Keyboard navigation on, a window that becomes key focuses its
+        // first control, and ↻ wore a blue ring on every open. Hand focus to
+        // the window itself once that has happened; Tab still walks the
+        // controls from there.
+        DispatchQueue.main.async { [weak panel] in panel?.makeFirstResponder(nil) }
         self.panel = panel
     }
 
