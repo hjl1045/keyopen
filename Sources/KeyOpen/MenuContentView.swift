@@ -153,6 +153,7 @@ struct MenuContentView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
+            .noFocusRing()
             .help("Rescan \(viewModel.appName ?? "the frontmost app")")
 
             moreMenu
@@ -322,7 +323,8 @@ struct MenuContentView: View {
                     .padding(.leading, 12)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            if open {
+            // A note-only section has no rows, and an empty rail drew as a stub.
+            if open, !rows.isEmpty {
                 // A hairline rail rather than a filled card — the color marks
                 // the group without boxing it in or eating vertical space.
                 HStack(alignment: .top, spacing: 8) {
@@ -454,4 +456,13 @@ private struct WindowReader: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {}
+}
+
+private extension View {
+    /// ↻ is the panel's first control, so with Keyboard navigation turned on,
+    /// macOS drew a blue focus ring around it every time the panel opened.
+    /// Tab still reaches it; only the ring is hidden.
+    @ViewBuilder func noFocusRing() -> some View {
+        if #available(macOS 14.0, *) { focusEffectDisabled() } else { self }
+    }
 }
