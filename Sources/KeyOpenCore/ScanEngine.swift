@@ -7,6 +7,15 @@ public struct ScanResult: Sendable {
 }
 
 public enum ScanEngine {
+    /// The Apple menu's shortcuts, live in every app (Apple's "Mac keyboard
+    /// shortcuts", support.apple.com/102650). The direct edition reads them from
+    /// the menu bar; the sandboxed one can't, and offered ⇧⌘Q (Log Out) as free.
+    static let appleMenu: [Binding] = [
+        Binding(combo: KeyCombo(modifiers: [.shift, .command], key: "Q"), action: "Log Out", source: .system),
+        Binding(combo: KeyCombo(modifiers: [.option, .shift, .command], key: "Q"), action: "Log Out without confirming", source: .system),
+        Binding(combo: KeyCombo(modifiers: [.control, .command], key: "Q"), action: "Lock Screen", source: .system),
+    ]
+
     /// - Parameter appBundleID: bundle id of the app being inspected. Its *own*
     ///   global hotkeys are listed with its menu commands rather than under
     ///   "other apps" — from where you're sitting, Wispr Flow's ⇧⌘U is Wispr
@@ -16,7 +25,8 @@ public enum ScanEngine {
                            globals: ShortcutCollector? = nil,
                            appBundleID: String? = nil,
                            recommender: Recommender = Recommender()) -> ScanResult {
-        let systemBindings = deduplicated(system.collect())
+        // Without the menu bar, the Apple menu's shortcuts come from our list.
+        let systemBindings = deduplicated(system.collect() + (app == nil ? appleMenu : []))
         let allGlobals = deduplicated(globals?.collect() ?? [])
         let (ownGlobals, globalBindings) = allGlobals.partitioned {
             appBundleID != nil && $0.owner?.bundleID == appBundleID

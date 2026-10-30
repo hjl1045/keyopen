@@ -114,7 +114,7 @@ among what we can see*.
 
 | Source | How |
 |---|---|
-| System shortcuts | `com.apple.symbolichotkeys` preferences |
+| System shortcuts | `com.apple.symbolichotkeys` preferences, plus macOS's defaults (macOS stores a shortcut there only once you change it) and the Apple menu's ⇧⌘Q / ⌃⌘Q when menus can't be read |
 | The current app's menu commands | Accessibility, walking its menu bar |
 | Global hotkeys of Swift apps | the [`KeyboardShortcuts`](https://github.com/sindresorhus/KeyboardShortcuts) library's stored prefs |
 | Global hotkeys of known config-file apps | reading that app's own config |
