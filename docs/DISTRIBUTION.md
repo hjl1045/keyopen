@@ -77,15 +77,18 @@ Without notarization you *can* still publish a cask, but users must pass
 `--no-quarantine` or right-click-Open — not a good public experience, and the
 official `homebrew-cask` repo won't accept it.
 
-### 4b. Host a release (on theautonomes.ai)
+### 4b. Host a release (GitHub Releases + theautonomes.ai)
 
-Releases live on the company site, not GitHub Releases. `./scripts/release.sh`
-signs with the Developer ID, notarizes, staples, and writes
-`dist/KeyOpen-<version>.zip`. Then, in `Websites/autonomes-web`:
+The zip lives on this repo's GitHub Releases, which count downloads (moved there
+2026-11-15; the site kept no count). The release notes and download page live on
+the company site. `./scripts/release.sh` signs with the Developer ID, notarizes,
+staples, and writes `dist/KeyOpen-<version>.zip`. Then:
 
-1. Copy the zip to `public/downloads/`.
-2. Add the release to the **top** of `public/keyopen/releases.json`:
-   `version`, `date`, `title`, `notes`, and `download`. Write notes for users of
+1. `gh release create v<version> dist/KeyOpen-<version>.zip -R hjl1045/keyopen --title "KeyOpen <version>: <title>"`
+   (use `GH_TOKEN="$(gh auth token --user hjl1045)"`).
+2. In `Websites/autonomes-web`, add the release to the **top** of `public/keyopen/releases.json`:
+   `version`, `date`, `title`, `notes`, and `download` (the GitHub asset URL,
+   `https://github.com/hjl1045/keyopen/releases/download/v<version>/KeyOpen-<version>.zip`). Write notes for users of
    the tool: spell out only changes to finding free shortcuts (a new app's
    hotkeys read, better suggestions, a clearer panel). Anything around it,
    like the About window, feedback, tipping, launch at login or update
@@ -98,7 +101,7 @@ That same `releases.json` is the app's update feed. The app compares the highest
 line uses the `title`. Check a release the way a downloader sees it:
 
 ```sh
-curl -sO https://www.theautonomes.ai/downloads/KeyOpen-<version>.zip
+curl -sLO https://github.com/hjl1045/keyopen/releases/download/v<version>/KeyOpen-<version>.zip
 ditto -x -k KeyOpen-<version>.zip out && spctl --assess --type execute -v out/KeyOpen.app
 ```
 
@@ -117,7 +120,7 @@ cask "keyopen" do
   version "0.1.0"
   sha256 "PUT_THE_SHASUM_HERE"
 
-  url "https://www.theautonomes.ai/downloads/KeyOpen-#{version}.zip"
+  url "https://github.com/hjl1045/keyopen/releases/download/v#{version}/KeyOpen-#{version}.zip"
   name "KeyOpen"
   desc "Menu-bar helper that shows in-use keyboard shortcuts and recommends free ones"
   homepage "https://github.com/hjl1045/keyopen"
